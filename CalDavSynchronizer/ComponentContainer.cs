@@ -109,6 +109,7 @@ namespace CalDavSynchronizer
         private readonly TotalProgressFactory _totalProgressFactory;
         private readonly IOutlookSession _outlookSession;
         private readonly IProfileTypeRegistry _profileTypeRegistry;
+        private readonly ServerSchedulingSendGuard _serverSchedulingSendGuard;
 
         public event EventHandler SynchronizationFailedWhileReportsFormWasNotVisible;
 
@@ -239,6 +240,8 @@ namespace CalDavSynchronizer
             }
 
             _oneTimeTaskRunner = new OneTimeTaskRunner(_outlookSession);
+
+            _serverSchedulingSendGuard = new ServerSchedulingSendGuard(application, _session, _optionsDataAccess.Load);
 
             DDayICalWorkaround.DDayICalCustomization.InitializeNoThrow();
         }
@@ -969,6 +972,7 @@ namespace CalDavSynchronizer
 
         public void Dispose()
         {
+            _serverSchedulingSendGuard.Dispose();
             _trayNotifier.Dispose();
         }
     }

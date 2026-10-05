@@ -820,6 +820,7 @@
     <Compile Include="Utilities\Serializer.cs" />
     <Compile Include="Implementation\ConflictResolution.cs" />
     <Compile Include="Implementation\Events\EventEntityMapper.cs" />
+    <Compile Include="Implementation\Events\ServerSchedulingSendGuard.cs" />
     <Compile Include="ThisAddIn.cs">
       <SubType>Code</SubType>
     </Compile>
