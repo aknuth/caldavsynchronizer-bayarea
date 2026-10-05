@@ -26,9 +26,10 @@ namespace CalDavSynchronizer.Ui.Options.Views
     {
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
-            bool a = (bool)values[0];
-            bool b = (bool)values[1];
-            bool c = (bool)values[2];
+            // While a view is unloaded the bindings deliver DependencyProperty.UnsetValue instead of bool.
+            bool a = values[0] is bool va && va;
+            bool b = values[1] is bool vb && vb;
+            bool c = values[2] is bool vc && vc;
 
             return a || (b && c) ? Visibility.Visible : Visibility.Collapsed;
         }
