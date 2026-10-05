@@ -19,6 +19,8 @@ eigenes oeffentliches Repo (AGPL-3.0).
 | 2026-10-05 | Profil deaktiviert, neue Besprechung | *Accept Proposal* ausgegraut. Das Plugin ist nicht die Ursache, es liegt an dem, was Outlook verschickt |
 | 2026-10-05 | Prototyp 1, neue Besprechung `zzz` | Outlook verschickt nichts. Danach Rueckfrage *Save changes and send update* (halber Zustand). Ohne Teilsynchronisation noch nicht auf dem Server, keine Einladung bei Gmail |
 | 2026-10-05 | Prototyp 1, Absage alter Besprechungen | Versand unterdrueckt, Outlook loescht den Termin trotzdem selbst (`Delete()` danach: *item has been moved or deleted*). Absage erreicht niemanden: Outlook schweigt, und der Server schickt bei `SCHEDULE-AGENT=CLIENT` kein CANCEL |
+| 2026-10-05 | Prototyp 2, neue Besprechung `yyy` | **Ziel erreicht.** Teilsynchronisation nach 10 s, Server verschickt, Einladung bei Gmail, Gegenvorschlag zurueck, *Accept Proposal* **aktiv**. Auf dem Server weder `SCHEDULE-AGENT=CLIENT` noch Organisator als `ATTENDEE` - der Organisator als Teilnehmer ist also nicht noetig, entscheidend ist, wer verschickt |
+| 2026-10-05 | Prototyp 2, Absage `zzz` aus dem geoeffneten Termin | Versand dreimal unterdrueckt, Termin blieb stehen: aus dem Fenster heraus loescht Outlook nicht selbst (anders als aus der Kalenderansicht). Prototyp 3 loescht dann selbst |
 
 Hinweis: mit *Use GlobalAppointmentID* heissen neue Dateien auf dem Server
 `040000008200E000...ics` (Grossbuchstaben). Ein Suchmuster wie
@@ -44,8 +46,9 @@ Dasselbe gilt fuer empfangene Einladungen: Antworten verschickt Outlook.
   (`PidLidFInvited`) und als Server-Termin markiert und gespeichert, dann
   Versand abgebrochen und Fenster ohne Rueckfrage geschlossen. Das Plugin laedt
   hoch, der Server verschickt.
-- Ganze Besprechung abgesagt: Versand abgebrochen. Outlook loescht den Termin
-  selbst, das Plugin loescht ihn auf dem Server, der Server schickt die Absage.
+- Ganze Besprechung abgesagt: Versand abgebrochen, Fenster verworfen, Termin
+  geloescht (falls Outlook das nicht schon selbst getan hat). Das Plugin loescht
+  ihn auf dem Server, der Server schickt die Absage.
 - Schlaegt das Speichern fehl, verschickt Outlook wie bisher.
 
 Profileinstellungen fuer den Test:

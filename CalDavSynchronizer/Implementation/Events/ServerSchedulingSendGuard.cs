@@ -147,12 +147,15 @@ namespace CalDavSynchronizer.Implementation.Events
                 s_logger.Info($"ItemSend: suppressing {meetingClass} for '{appointment.Subject}' (profile '{profile.Name}'), the server sends instead.");
                 cancel = true;
 
-                // On cancellation Outlook deletes the appointment itself even though the send was cancelled,
-                // and the synchronization deletes it on the server, which sends the CANCEL.
-                if (!isWholeMeetingCancelled && inspectorAppointment != null)
+                // Closing the inspector or deleting inside ItemSend is not allowed, so defer it.
+                ComponentContainer.EnsureSynchronizationContext();
+                if (isWholeMeetingCancelled)
                 {
-                    // Closing the inspector inside ItemSend is not allowed, so defer it.
-                    ComponentContainer.EnsureSynchronizationContext();
+                    var cancelledInspector = inspectorAppointment != null ? inspector : null;
+                    SynchronizationContext.Current.Post(_ => DeleteCancelledMeeting(appointment, cancelledInspector), null);
+                }
+                else if (inspectorAppointment != null)
+                {
                     SynchronizationContext.Current.Post(_ => CloseInspector(inspector), null);
                 }
             }
@@ -160,6 +163,33 @@ namespace CalDavSynchronizer.Implementation.Events
             {
                 // Never break sending because of the guard. If in doubt, Outlook sends.
                 s_logger.Error("ItemSend: error in send guard, Outlook sends.", x);
+            }
+        }
+
+        private void DeleteCancelledMeeting(AppointmentItem appointment, Inspector inspectorOrNull)
+        {
+            // Deleting from the calendar view, Outlook deletes the appointment itself despite the cancelled send.
+            // Cancelling from the open meeting, it keeps it. The synchronization then deletes it on the server,
+            // which sends the CANCEL.
+            try
+            {
+                inspectorOrNull?.Close(OlInspectorClose.olDiscard);
+                appointment.Delete();
+                s_logger.Info("ItemSend: cancelled meeting deleted, server sends CANCEL.");
+            }
+            catch (COMException x) when (x.ErrorCode == unchecked((int) 0x8004010A))
+            {
+                s_logger.Info("ItemSend: cancelled meeting already deleted by Outlook, server sends CANCEL.");
+            }
+            catch (Exception x)
+            {
+                s_logger.Error("ItemSend: could not delete cancelled meeting.", x);
+            }
+            finally
+            {
+                if (inspectorOrNull != null)
+                    Marshal.ReleaseComObject(inspectorOrNull);
+                Marshal.ReleaseComObject(appointment);
             }
         }
 
