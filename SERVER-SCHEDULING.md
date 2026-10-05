@@ -88,7 +88,10 @@ Lokal unter `C:\` bauen, nicht direkt vom Share (VSTO-Vertrauensstellung).
 
 1. Das installierte CalDav Synchronizer unter *Apps & Features*
    deinstallieren. Die Profile in `%APPDATA%\CalDavSynchronizer` bleiben.
-2. `C:\src\ocs\CalDavSynchronizer.sln` in Visual Studio oeffnen.
+2. `C:\src\ocs\CalDavSynchronizer.sln` in Visual Studio oeffnen. Die Meldung,
+   `CalDavSynchronizer.Setup.vdproj` werde nicht unterstuetzt, mit *OK*
+   bestaetigen. Das ist nur das MSI-Installer-Projekt (braucht die Erweiterung
+   *Microsoft Visual Studio Installer Projects*), fuer F5 nicht noetig.
 3. Projekt *CalDavSynchronizer* -> Eigenschaften -> *Signierung* ->
    *Testzertifikat erstellen* (das Zertifikat des Originalautors fehlt).
    Diese Aenderung nicht committen.
