@@ -21,6 +21,11 @@ eigenes oeffentliches Repo (AGPL-3.0).
 | 2026-10-05 | Prototyp 1, Absage alter Besprechungen | Versand unterdrueckt, Outlook loescht den Termin trotzdem selbst (`Delete()` danach: *item has been moved or deleted*). Absage erreicht niemanden: Outlook schweigt, und der Server schickt bei `SCHEDULE-AGENT=CLIENT` kein CANCEL |
 | 2026-10-05 | Prototyp 2, neue Besprechung `yyy` | **Ziel erreicht.** Teilsynchronisation nach 10 s, Server verschickt, Einladung bei Gmail, Gegenvorschlag zurueck, *Accept Proposal* **aktiv**. Auf dem Server weder `SCHEDULE-AGENT=CLIENT` noch Organisator als `ATTENDEE` - der Organisator als Teilnehmer ist also nicht noetig, entscheidend ist, wer verschickt |
 | 2026-10-05 | Prototyp 2, Absage `zzz` aus dem geoeffneten Termin | Versand dreimal unterdrueckt, Termin blieb stehen: aus dem Fenster heraus loescht Outlook nicht selbst (anders als aus der Kalenderansicht). Prototyp 3 loescht dann selbst |
+| 2026-10-05 | Prototyp 3, Absage `yyy` aus dem geoeffneten Termin | Plugin: Outlook loescht selbst, `DELETE` auf dem Server ok. Absage kam bei Google nicht an - Fehler lag im sabre/dav-Dienst (email-amazon), dort behoben |
+
+Noch offen zu pruefen: *Accept Proposal* mit *Send Update* (ein Update bei
+Gmail?), Absage aus der Kalenderansicht, einzelnen Teilnehmer entfernen
+(schickt der Server ihm die Absage?).
 
 Hinweis: mit *Use GlobalAppointmentID* heissen neue Dateien auf dem Server
 `040000008200E000...ics` (Grossbuchstaben). Ein Suchmuster wie
@@ -109,3 +114,12 @@ Lokal unter `C:\` bauen, nicht direkt vom Share (VSTO-Vertrauensstellung).
    *Testzertifikat erstellen* (das Zertifikat des Originalautors fehlt).
    Diese Aenderung nicht committen.
 4. Outlook schliessen, *CalDavSynchronizer* als Startprojekt, F5.
+
+## Naechste Schritte
+
+1. **Abspecken auf sabre/dav.** Alle anderen Anbieterprofile, OAuth (Google,
+   Swisscom) usw. raus. Ziel: nur die Mailadresse eingeben (zugleich
+   Benutzername), Anmeldung mit dem IMAP-Passwort aus Outlook, das Plugin
+   findet alle Kalender dieser Adresse und richtet sie im Hintergrund ein.
+   Details folgen.
+2. **Richtiger Installer** mit gueltigem Code-Signing-Zertifikat.
