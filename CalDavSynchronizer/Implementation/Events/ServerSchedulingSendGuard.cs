@@ -32,14 +32,18 @@ namespace CalDavSynchronizer.Implementation.Events
     /// Prevents Outlook from sending iTIP mails (meeting requests and cancellations) for meetings
     /// in folders whose profile leaves scheduling to the CalDAV server (RFC 6638), i.e. profiles
     /// that map attendees and neither set SCHEDULE-AGENT=CLIENT nor X-SOGO-SEND-APPOINTMENT-NOTIFICATIONS.
-    /// The send is cancelled, the appointment is saved (or deleted on cancellation) and the
-    /// synchronization uploads it, so the server sends the invitation exactly once.
+    /// The send is cancelled, the appointment is saved and the synchronization uploads it, so the
+    /// server sends the invitation exactly once. On cancellation Outlook deletes the appointment
+    /// itself and the synchronization deletes it on the server, which sends the CANCEL.
+    /// Only new meetings and meetings already handed to the server are taken over; meetings that
+    /// Outlook has sent itself stay with Outlook (and keep SCHEDULE-AGENT=CLIENT on the server).
     /// </summary>
     public class ServerSchedulingSendGuard : IDisposable
     {
         private static readonly ILog s_logger = LogManager.GetLogger(MethodInfo.GetCurrentMethod().DeclaringType);
 
         private const string PR_FINVITED = "http://schemas.microsoft.com/mapi/id/{00062002-0000-0000-C000-000000000046}/8229000B";
+        private const string PR_SERVER_SCHEDULED = "http://schemas.microsoft.com/mapi/string/{00020329-0000-0000-C000-000000000046}/CalDavSynchronizerServerScheduled";
 
         private readonly Application _application;
         private readonly NameSpace _session;
@@ -57,6 +61,24 @@ namespace CalDavSynchronizer.Implementation.Events
         public void Dispose()
         {
             ((ApplicationEvents_11_Event) _application).ItemSend -= Application_ItemSend;
+        }
+
+        public static bool IsServerScheduled(AppointmentItem appointment) => GetBooleanPropertyOrFalse(appointment, PR_SERVER_SCHEDULED);
+
+        private static bool GetBooleanPropertyOrFalse(AppointmentItem appointment, string propertyName)
+        {
+            try
+            {
+                using (var propertyAccessor = GenericComObjectWrapper.Create(appointment.PropertyAccessor))
+                {
+                    return propertyAccessor.Inner.GetProperty(propertyName) is bool value && value;
+                }
+            }
+            catch (COMException)
+            {
+                // Property not set
+                return false;
+            }
         }
 
         private void Application_ItemSend(object item, ref bool cancel)
@@ -95,18 +117,44 @@ namespace CalDavSynchronizer.Implementation.Events
                 if (meetingStatus != OlMeetingStatus.olMeeting && meetingStatus != OlMeetingStatus.olMeetingCanceled)
                     return;
 
+                // Meetings Outlook has already sent itself stay with Outlook, otherwise attendees would get
+                // updates from Outlook and the server.
+                var isNewMeeting = !GetBooleanPropertyOrFalse(appointment, PR_FINVITED);
+                if (!isNewMeeting && !IsServerScheduled(appointment))
+                    return;
+
                 var profile = GetServerSchedulingProfileOrNull(appointment);
                 if (profile == null)
                     return;
 
+                var isWholeMeetingCancelled = meetingStatus == OlMeetingStatus.olMeetingCanceled;
+                if (!isWholeMeetingCancelled)
+                {
+                    // Save before cancelling, while still inside ItemSend: an unsaved meeting makes Outlook
+                    // ask "save changes and send update" right after the cancelled send. If saving fails,
+                    // Outlook sends as usual.
+                    // FInvited makes Outlook treat the meeting as sent ("Send Update" on later changes),
+                    // the marker hands its scheduling to the server.
+                    using (var propertyAccessor = GenericComObjectWrapper.Create(appointment.PropertyAccessor))
+                    {
+                        propertyAccessor.Inner.SetProperty(PR_FINVITED, true);
+                        propertyAccessor.Inner.SetProperty(PR_SERVER_SCHEDULED, true);
+                    }
+
+                    appointment.Save();
+                }
+
                 s_logger.Info($"ItemSend: suppressing {meetingClass} for '{appointment.Subject}' (profile '{profile.Name}'), the server sends instead.");
                 cancel = true;
 
-                // Closing the inspector or deleting the item inside ItemSend is not allowed, so defer it.
-                ComponentContainer.EnsureSynchronizationContext();
-                var isWholeMeetingCancelled = meetingStatus == OlMeetingStatus.olMeetingCanceled;
-                var appointmentInspector = inspectorAppointment != null ? inspector : null;
-                SynchronizationContext.Current.Post(_ => CompleteSuppressedSend(appointment, appointmentInspector, isWholeMeetingCancelled), null);
+                // On cancellation Outlook deletes the appointment itself even though the send was cancelled,
+                // and the synchronization deletes it on the server, which sends the CANCEL.
+                if (!isWholeMeetingCancelled && inspectorAppointment != null)
+                {
+                    // Closing the inspector inside ItemSend is not allowed, so defer it.
+                    ComponentContainer.EnsureSynchronizationContext();
+                    SynchronizationContext.Current.Post(_ => CloseInspector(inspector), null);
+                }
             }
             catch (Exception x)
             {
@@ -115,42 +163,21 @@ namespace CalDavSynchronizer.Implementation.Events
             }
         }
 
-        private void CompleteSuppressedSend(AppointmentItem appointment, Inspector inspectorOrNull, bool isWholeMeetingCancelled)
+        private void CloseInspector(Inspector inspector)
         {
             try
             {
-                if (isWholeMeetingCancelled)
-                {
-                    // Deleting the meeting makes the synchronization delete it on the server,
-                    // which sends the CANCEL to the attendees.
-                    inspectorOrNull?.Close(OlInspectorClose.olDiscard);
-                    appointment.Delete();
-                    s_logger.Info("ItemSend: cancelled meeting deleted, server sends CANCEL.");
-                }
-                else
-                {
-                    // Mark the invitations as sent, so Outlook treats the meeting as sent
-                    // ("Send Update" on later changes) instead of "invitations have not been sent".
-                    using (var propertyAccessor = GenericComObjectWrapper.Create(appointment.PropertyAccessor))
-                    {
-                        propertyAccessor.Inner.SetProperty(PR_FINVITED, true);
-                    }
-
-                    appointment.Save();
-                    if (inspectorOrNull != null)
-                        inspectorOrNull.Close(OlInspectorClose.olSave);
-                    s_logger.Info("ItemSend: meeting saved, synchronization uploads it and the server sends.");
-                }
+                // Already saved in ItemSend.
+                inspector.Close(OlInspectorClose.olDiscard);
             }
             catch (Exception x)
             {
-                s_logger.Error("ItemSend: error completing suppressed send.", x);
+                // The user may have closed it already.
+                s_logger.Warn("ItemSend: could not close inspector.", x);
             }
             finally
             {
-                if (inspectorOrNull != null)
-                    Marshal.ReleaseComObject(inspectorOrNull);
-                Marshal.ReleaseComObject(appointment);
+                Marshal.ReleaseComObject(inspector);
             }
         }
 

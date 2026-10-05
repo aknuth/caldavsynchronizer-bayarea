@@ -17,6 +17,8 @@ eigenes oeffentliches Repo (AGPL-3.0).
 | 2026-10-04 | SOGo-Profil | verworfen, setzt `X-SOGO-SEND-APPOINTMENT-NOTIFICATIONS: NO` |
 | 2026-10-05 | *Use GlobalAppointmentID for UID attribute*, neue Besprechung | *Accept Proposal* ausgegraut. UID ist nicht die Ursache |
 | 2026-10-05 | Profil deaktiviert, neue Besprechung | *Accept Proposal* ausgegraut. Das Plugin ist nicht die Ursache, es liegt an dem, was Outlook verschickt |
+| 2026-10-05 | Prototyp 1, neue Besprechung `zzz` | Outlook verschickt nichts. Danach Rueckfrage *Save changes and send update* (halber Zustand). Ohne Teilsynchronisation noch nicht auf dem Server, keine Einladung bei Gmail |
+| 2026-10-05 | Prototyp 1, Absage alter Besprechungen | Versand unterdrueckt, Outlook loescht den Termin trotzdem selbst (`Delete()` danach: *item has been moved or deleted*). Absage erreicht niemanden: Outlook schweigt, und der Server schickt bei `SCHEDULE-AGENT=CLIENT` kein CANCEL |
 
 Hinweis: mit *Use GlobalAppointmentID* heissen neue Dateien auf dem Server
 `040000008200E000...ics` (Grossbuchstaben). Ein Suchmuster wie
@@ -31,12 +33,20 @@ Faengt `Application.ItemSend` fuer Besprechungsanfragen und Absagen ab, die man
 als Organisator verschickt, in Ordnern eines Profils, das aktiv ist, Teilnehmer
 abbildet und weder `SCHEDULE-AGENT=CLIENT` noch die SOGo-Eigenschaft setzt.
 
-- Einladung/Aenderung: Versand abgebrochen, Termin als verschickt markiert
-  (`PidLidFInvited`), gespeichert, Fenster geschlossen. Das Plugin laedt hoch,
-  der Server verschickt.
-- Ganze Besprechung abgesagt: Versand abgebrochen, Termin geloescht. Das Plugin
-  loescht auf dem Server, der Server schickt die Absage.
-- Bei jedem Fehler verschickt Outlook wie bisher.
+Uebernommen werden nur **neue** Besprechungen (`PidLidFInvited` nicht gesetzt)
+und solche, die schon dem Server uebergeben wurden (Markierung
+`CalDavSynchronizerServerScheduled`). Was Outlook frueher selbst verschickt hat,
+bleibt bei Outlook, und der Mapper setzt dafuer weiter `SCHEDULE-AGENT=CLIENT`
+- unabhaengig vom Haken im Profil. Sonst kaemen Aenderungen doppelt an.
+Dasselbe gilt fuer empfangene Einladungen: Antworten verschickt Outlook.
+
+- Einladung/Aenderung: noch innerhalb von `ItemSend` als verschickt
+  (`PidLidFInvited`) und als Server-Termin markiert und gespeichert, dann
+  Versand abgebrochen und Fenster ohne Rueckfrage geschlossen. Das Plugin laedt
+  hoch, der Server verschickt.
+- Ganze Besprechung abgesagt: Versand abgebrochen. Outlook loescht den Termin
+  selbst, das Plugin loescht ihn auf dem Server, der Server schickt die Absage.
+- Schlaegt das Speichern fehl, verschickt Outlook wie bisher.
 
 Profileinstellungen fuer den Test:
 

@@ -195,7 +195,11 @@ namespace CalDavSynchronizer.Implementation.Events
 
             newTargetCalender.Events.Add(newTargetEvent);
 
-            await Map1To2(sourceWrapper.Inner, newTargetEvent, false, startIcalTimeZone, endIcalTimeZone, logger, context);
+            // Meetings whose sending was taken over by the server keep no SCHEDULE-AGENT=CLIENT, all others
+            // (sent by Outlook itself, or received) do, so the server never sends a second copy.
+            var scheduleAgentClient = _configuration.ScheduleAgentClient || !ServerSchedulingSendGuard.IsServerScheduled(sourceWrapper.Inner);
+
+            await Map1To2(sourceWrapper.Inner, newTargetEvent, false, startIcalTimeZone, endIcalTimeZone, logger, context, scheduleAgentClient);
 
             for (int i = 0, newSequenceNumber = existingTargetCalender.Events.Count > 0 ? existingTargetCalender.Events.Max(e => e.Sequence) + 1 : 0;
                 i < newTargetCalender.Events.Count;
@@ -207,7 +211,7 @@ namespace CalDavSynchronizer.Implementation.Events
             return newTargetCalender;
         }
 
-        private async Task Map1To2(AppointmentItem source, IEvent target, bool isRecurrenceException, ITimeZone startIcalTimeZone, ITimeZone endIcalTimeZone, IEntitySynchronizationLogger logger, IEventSynchronizationContext context)
+        private async Task Map1To2(AppointmentItem source, IEvent target, bool isRecurrenceException, ITimeZone startIcalTimeZone, ITimeZone endIcalTimeZone, IEntitySynchronizationLogger logger, IEventSynchronizationContext context, bool scheduleAgentClient)
         {
             if (source.AllDayEvent)
             {
@@ -293,13 +297,13 @@ namespace CalDavSynchronizer.Implementation.Events
 
             if (_configuration.MapAttendees)
             {
-                var organizerSet = await MapAttendees1To2(source, target, logger);
+                var organizerSet = await MapAttendees1To2(source, target, logger, scheduleAgentClient);
                 if (!organizerSet)
-                    MapOrganizer1To2(source, target, logger);
+                    MapOrganizer1To2(source, target, logger, scheduleAgentClient);
             }
 
             if (!isRecurrenceException)
-                await MapRecurrance1To2(source, target, startIcalTimeZone, endIcalTimeZone, logger, context);
+                await MapRecurrance1To2(source, target, startIcalTimeZone, endIcalTimeZone, logger, context, scheduleAgentClient);
 
 
             target.Class = CommonEntityMapper.MapPrivacy1To2(source.Sensitivity, _configuration.MapSensitivityPrivateToClassConfidential, _configuration.MapSensitivityPublicToDefault);
@@ -643,7 +647,7 @@ namespace CalDavSynchronizer.Implementation.Events
             }
         }
 
-        private void MapOrganizer1To2(AppointmentItem source, IEvent target, IEntitySynchronizationLogger logger)
+        private void MapOrganizer1To2(AppointmentItem source, IEvent target, IEntitySynchronizationLogger logger, bool scheduleAgentClient)
         {
             if (source.MeetingStatus != OlMeetingStatus.olNonMeeting)
             {
@@ -661,7 +665,7 @@ namespace CalDavSynchronizer.Implementation.Events
                             SetOrganizer(target, source.Organizer, organizerEmail, logger);
                         }
 
-                        SetOrganizerSchedulingParameters(source, target, logger);
+                        SetOrganizerSchedulingParameters(source, target, logger, scheduleAgentClient);
                     }
                 }
             }
@@ -723,9 +727,9 @@ namespace CalDavSynchronizer.Implementation.Events
             target.Organizer = targetOrganizer;
         }
 
-        private void SetOrganizerSchedulingParameters(AppointmentItem source, IEvent target, IEntitySynchronizationLogger logger)
+        private void SetOrganizerSchedulingParameters(AppointmentItem source, IEvent target, IEntitySynchronizationLogger logger, bool scheduleAgentClient)
         {
-            if (_configuration.ScheduleAgentClient)
+            if (scheduleAgentClient)
                 target.Organizer.Parameters.Add("SCHEDULE-AGENT", "CLIENT");
             if (_configuration.SendNoAppointmentNotifications)
                 target.Properties.Add(new CalendarProperty("X-SOGO-SEND-APPOINTMENT-NOTIFICATIONS", "NO"));
@@ -769,7 +773,7 @@ namespace CalDavSynchronizer.Implementation.Events
             }
         }
 
-        private async Task MapRecurrance1To2(AppointmentItem source, IEvent target, ITimeZone startIcalTimeZone, ITimeZone endIcalTimeZone, IEntitySynchronizationLogger logger, IEventSynchronizationContext context)
+        private async Task MapRecurrance1To2(AppointmentItem source, IEvent target, ITimeZone startIcalTimeZone, ITimeZone endIcalTimeZone, IEntitySynchronizationLogger logger, IEventSynchronizationContext context, bool scheduleAgentClient)
         {
             if (source.IsRecurring)
             {
@@ -895,7 +899,7 @@ namespace CalDavSynchronizer.Implementation.Events
                                     var targetException = new Event();
                                     target.Calendar.Events.Add(targetException);
                                     targetException.UID = target.UID;
-                                    await Map1To2(wrapper.Inner, targetException, true, startIcalTimeZone, endIcalTimeZone, logger, context);
+                                    await Map1To2(wrapper.Inner, targetException, true, startIcalTimeZone, endIcalTimeZone, logger, context, scheduleAgentClient);
 
                                     // Organizer must be the same for all components to avoid SameOrganizerForAllComponentsException
                                     if (target.Organizer != null)
@@ -1389,7 +1393,7 @@ namespace CalDavSynchronizer.Implementation.Events
             }
         }
 
-        private async Task<bool> MapAttendees1To2(AppointmentItem source, IEvent target, IEntitySynchronizationLogger logger)
+        private async Task<bool> MapAttendees1To2(AppointmentItem source, IEvent target, IEntitySynchronizationLogger logger, bool scheduleAgentClient)
         {
             var organizerSet = false;
             var ownAttendeeSet = false;
@@ -1465,7 +1469,7 @@ namespace CalDavSynchronizer.Implementation.Events
                     attendee.Role = MapAttendeeType1To2((OlMeetingRecipientType) recipient.Type);
 
                     attendee.RSVP = true;
-                    if (_configuration.ScheduleAgentClient)
+                    if (scheduleAgentClient)
                         attendee.Parameters.Add("SCHEDULE-AGENT", "CLIENT");
                     target.Attendees.Add(attendee);
                 }
@@ -1487,7 +1491,7 @@ namespace CalDavSynchronizer.Implementation.Events
                         ownAttendee.CommonName = nameWithoutEmail;
                         ownAttendee.ParticipationStatus = (source.MeetingStatus == OlMeetingStatus.olMeetingReceivedAndCanceled) ? "DECLINED" : MapParticipation1To2(source.ResponseStatus);
                         ownAttendee.Role = MapAttendeeType1To2((OlMeetingRecipientType) recipient.Type);
-                        if (_configuration.ScheduleAgentClient)
+                        if (scheduleAgentClient)
                             ownAttendee.Parameters.Add("SCHEDULE-AGENT", "CLIENT");
                         target.Attendees.Add(ownAttendee);
                         ownAttendeeSet = true;
@@ -1508,7 +1512,7 @@ namespace CalDavSynchronizer.Implementation.Events
                         SetOrganizer(target, recipient.Name, null, logger);
                     }
 
-                    SetOrganizerSchedulingParameters(source, target, logger);
+                    SetOrganizerSchedulingParameters(source, target, logger, scheduleAgentClient);
                     organizerSet = true;
                 }
             }
