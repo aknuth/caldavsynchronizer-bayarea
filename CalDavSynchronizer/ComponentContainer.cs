@@ -28,6 +28,7 @@ using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Markup;
 using CalDavSynchronizer.AutomaticUpdates;
+using CalDavSynchronizer.AutoSetup;
 using CalDavSynchronizer.ChangeWatching;
 using CalDavSynchronizer.Contracts;
 using CalDavSynchronizer.DataAccess;
@@ -110,6 +111,7 @@ namespace CalDavSynchronizer
         private readonly IOutlookSession _outlookSession;
         private readonly IProfileTypeRegistry _profileTypeRegistry;
         private readonly ServerSchedulingSendGuard _serverSchedulingSendGuard;
+        private readonly AccountAutoSetup _accountAutoSetup;
 
         public event EventHandler SynchronizationFailedWhileReportsFormWasNotVisible;
 
@@ -242,6 +244,7 @@ namespace CalDavSynchronizer
             _oneTimeTaskRunner = new OneTimeTaskRunner(_outlookSession);
 
             _serverSchedulingSendGuard = new ServerSchedulingSendGuard(application, _session, _optionsDataAccess.Load);
+            _accountAutoSetup = new AccountAutoSetup(_session, _outlookAccountPasswordProvider);
 
             DDayICalWorkaround.DDayICalCustomization.InitializeNoThrow();
         }
@@ -272,11 +275,30 @@ namespace CalDavSynchronizer
             var generalOptions = _generalOptionsDataAccess.LoadOptions();
 
             await _scheduler.SetOptions(options, generalOptions);
+            await RunAccountAutoSetupNoThrow();
             if (generalOptions.TriggerSyncAfterSendReceive)
             {
                 s_logger.Info("Triggering sync after startup");
                 EnsureSynchronizationContext();
                 SynchronizeInitial();
+            }
+        }
+
+        private async Task RunAccountAutoSetupNoThrow()
+        {
+            try
+            {
+                var generalOptions = _generalOptionsDataAccess.LoadOptions();
+                var newOptions = await _accountAutoSetup.GetUpdatedOptionsOrNull(_optionsDataAccess.Load(), generalOptions);
+                if (newOptions != null)
+                {
+                    s_logger.Info("AutoSetup changed the profiles, applying them.");
+                    await ApplyNewOptions(_optionsDataAccess.Load(), newOptions, generalOptions, Enumerable.Empty<OneTimeChangeCategoryTask>());
+                }
+            }
+            catch (Exception x)
+            {
+                s_logger.Error("AutoSetup failed.", x);
             }
         }
 

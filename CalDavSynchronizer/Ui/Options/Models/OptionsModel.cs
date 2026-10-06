@@ -40,6 +40,7 @@ namespace CalDavSynchronizer.Ui.Options.Models
 
         private readonly bool _isGoogle;
         private bool _isActive;
+        private bool _isAutoConfigured;
         private string _name;
 
         private bool _enableChangeTriggeredSynchronization;
@@ -361,6 +362,7 @@ namespace CalDavSynchronizer.Ui.Options.Models
         {
             _name = data.Name;
             _isActive = !data.Inactive;
+            _isAutoConfigured = data.IsAutoConfigured;
 
             _enableChangeTriggeredSynchronization = data.EnableChangeTriggeredSynchronization;
 
@@ -430,6 +432,7 @@ namespace CalDavSynchronizer.Ui.Options.Models
                 Id = Id,
                 Name = Name,
                 Inactive = !IsActive,
+                IsAutoConfigured = _isAutoConfigured,
                 EnableChangeTriggeredSynchronization = _enableChangeTriggeredSynchronization,
                 OutlookFolderEntryId = _selectedFolderOrNull?.EntryId,
                 OutlookFolderStoreId = _selectedFolderOrNull?.StoreId,

@@ -28,6 +28,8 @@ eigenes oeffentliches Repo (AGPL-3.0).
 | 2026-10-06 | Zwei Teilnehmer, einer entfernt | ok, der Entfernte bekommt die Absage vom Server |
 | 2026-10-06 | Neue Besprechung senden | Rueckfrage *Save changes and send update* erscheint weiterhin. Offen: kommt sie von Outlook nach dem abgebrochenen Versand oder von `Inspector.Close`? Logzeilen `closing inspector` / `inspector closed` eingebaut |
 | 2026-10-06 | Dasselbe mit Logzeilen | `Close` kehrt nach 0,5 s zurueck, die Rueckfrage kommt danach. Ursache vermutlich `PidLidFInvited` vor dem Schliessen: Outlook haelt die Besprechung fuer verschickt und den Fensterinhalt fuer eine Aenderung. Jetzt erst nach dem Schliessen gesetzt |
+| 2026-10-06 | Neue Besprechung senden | Fenster geht ohne Rueckfrage zu, Einladung bei Gmail, Antwort kommt zurueck |
+| 2026-10-06 | Zeit aendern, *Send Update* | Rueckfrage erscheint (gleiche Ursache, stoert nicht, kein doppelter Versand). Update und Annahme ok |
 | 2026-10-06 | Einladung an interne Adresse | Keine Mail: sabre/dav liefert lokal in den Kalender des Empfaengers. Empfehlung fuer den Server: interne Empfaenger wie externe nur per iMIP einladen (sonst droht in Outlook ein doppelter Termin, wenn Mail und Synchronisation konkurrieren) |
 
 Hinweis: mit *Use GlobalAppointmentID* heissen neue Dateien auf dem Server
@@ -118,11 +120,41 @@ Lokal unter `C:\` bauen, nicht direkt vom Share (VSTO-Vertrauensstellung).
    Diese Aenderung nicht committen.
 4. Outlook schliessen, *CalDavSynchronizer* als Startprojekt, F5.
 
+## Automatische Einrichtung
+
+`CalDavSynchronizer/AutoSetup/AccountAutoSetup.cs`, laeuft bei jedem
+Outlook-Start (`ComponentContainer.RunAccountAutoSetupNoThrow`).
+
+- Fuer jedes IMAP-Konto in Outlook: Server `https://dav.{domain}/`,
+  Benutzer = Mailadresse, Passwort = gespeichertes IMAP-Passwort.
+- Sucht ueber `/.well-known/caldav` und `/.well-known/carddav` alle Kalender
+  und Adressbuecher (eigene und geteilte).
+- Eigener Kalender `default` -> Standard-Kalenderordner des IMAP-Kontos
+  (Outlook sucht Besprechungsantworten nur dort). Eigenes Adressbuch `default`
+  -> Standard-Kontaktordner. Alle anderen -> Unterordner davon, geteilte mit
+  Besitzer im Namen, z.B. `Buchhaltung (accounting@...)`.
+- Schreibrecht -> Abgleich in beide Richtungen; nur Leserecht -> nur
+  Server nach Outlook. Sofortabgleich nach Aenderung an.
+- Kalender: `SCHEDULE-AGENT=CLIENT` aus, *Use GlobalAppointmentID* an.
+- Aufgaben (VTODO) werden nicht eingerichtet.
+- Profile erkennt sie an der URL wieder. Von Hand angelegte Profile mit
+  derselben URL bleiben unangetastet (keine Dubletten). Verschwindet eine
+  Sammlung vom Server, wird ihr Profil deaktiviert, der Ordner bleibt.
+  Findet sie gar nichts (Server nicht erreichbar, Anmeldung abgelehnt), aendert
+  sie nichts.
+- Eigene Markierung `IsAutoConfigured` in den Profilen.
+
+Der Versandschutz greift nur noch bei Profilen, die Outlook-Aenderungen
+hochladen; aus einem nur-lesend geteilten Kalender verschickt also weiter
+Outlook.
+
+Einschraenkung: Einladungen funktionieren sauber nur aus dem
+Standardkalender. Ob geteilte Kalender mit Besitzer erkannt werden, haengt
+davon ab, ob sabre/dav fuer die Freigabe den Besitzer als `DAV:owner` meldet.
+
 ## Naechste Schritte
 
-1. **Abspecken auf sabre/dav.** Alle anderen Anbieterprofile, OAuth (Google,
-   Swisscom) usw. raus. Ziel: nur die Mailadresse eingeben (zugleich
-   Benutzername), Anmeldung mit dem IMAP-Passwort aus Outlook, das Plugin
-   findet alle Kalender dieser Adresse und richtet sie im Hintergrund ein.
-   Details folgen.
+1. **Abspecken auf sabre/dav.** Automatische Einrichtung (siehe oben) ist
+   gebaut. Danach: alle anderen Anbieterprofile, OAuth (Google, Swisscom),
+   Aufgaben und die alten Einrichtungsdialoge entfernen.
 2. **Richtiger Installer** mit gueltigem Code-Signing-Zertifikat.

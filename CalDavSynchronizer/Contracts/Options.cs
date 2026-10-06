@@ -35,6 +35,8 @@ namespace CalDavSynchronizer.Contracts
         private static Random s_random = new Random();
 
         public bool Inactive { get; set; }
+        /// <summary>Created by AutoSetup.AccountAutoSetup, which may update or deactivate it.</summary>
+        public bool IsAutoConfigured { get; set; }
         public string Name { get; set; }
         public Guid Id { get; set; }
         public string OutlookFolderEntryId { get; set; }

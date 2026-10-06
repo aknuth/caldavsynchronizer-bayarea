@@ -244,6 +244,10 @@ namespace CalDavSynchronizer.Implementation.Events
 
             return _loadOptions().FirstOrDefault(o =>
                 !o.Inactive
+                // Only profiles that upload Outlook's changes, otherwise the server never sees the meeting.
+                && (o.SynchronizationMode == SynchronizationMode.MergeInBothDirections
+                    || o.SynchronizationMode == SynchronizationMode.MergeOutlookIntoServer
+                    || o.SynchronizationMode == SynchronizationMode.ReplicateOutlookIntoServer)
                 && o.MappingConfiguration is EventMappingConfiguration mapping
                 && mapping.MapAttendees
                 && !mapping.ScheduleAgentClient
