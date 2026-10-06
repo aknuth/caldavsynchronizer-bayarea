@@ -91,6 +91,57 @@ namespace CalDavSynchronizer.DataAccess
             return null;
         }
 
+        /// <summary>
+        /// Email address of the sharer, read from the sharing invite (DAV:invite, or CS:invite of calendarserver),
+        /// which lists the owner as organizer. Servers like sabre/dav report the sharee as DAV:owner of a shared
+        /// calendar instance, so DAV:owner can't tell who shared it.
+        /// </summary>
+        public async Task<string> GetSharingOwnerEmailOrNull(Uri calendarUri)
+        {
+            try
+            {
+                var properties = await _webDavClient.ExecuteWebDavRequestAndReadResponse(
+                    calendarUri,
+                    "PROPFIND",
+                    0,
+                    null,
+                    null,
+                    "application/xml",
+                    @"<?xml version='1.0'?>
+                        <D:propfind xmlns:D=""DAV:"" xmlns:CS=""http://calendarserver.org/ns/"">
+                          <D:prop>
+                            <D:invite/>
+                            <CS:invite/>
+                          </D:prop>
+                        </D:propfind>
+                 ");
+
+                var organizerHref = properties.XmlDocument.SelectSingleNode("/D:multistatus/D:response/D:propstat/D:prop/D:invite/D:organizer/D:href", properties.XmlNamespaceManager)
+                                    ?? properties.XmlDocument.SelectSingleNode("/D:multistatus/D:response/D:propstat/D:prop/CS:invite/CS:organizer/D:href", properties.XmlNamespaceManager);
+                var href = organizerHref?.InnerText?.Trim();
+                if (string.IsNullOrEmpty(href))
+                    return null;
+
+                if (href.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase))
+                    return href.Substring("mailto:".Length);
+
+                // A principal like principals/user@example.com/
+                var lastSegment = Uri.UnescapeDataString(href.TrimEnd('/').Split('/').Last());
+                if (lastSegment.Contains("@"))
+                    return lastSegment;
+
+                var principalUri = Uri.IsWellFormedUriString(href, UriKind.Absolute)
+                    ? new Uri(href)
+                    : new Uri(properties.DocumentUri, href.StartsWith("/") ? href : "/" + href);
+                return await GetUserEmailAddressOrNull(principalUri);
+            }
+            catch (Exception x)
+            {
+                s_logger.Warn($"Could not read sharing owner of '{calendarUri}'.", x);
+                return null;
+            }
+        }
+
         public async Task<Uri> GetResourceUriOrNull(string displayName)
         {
             XmlDocumentWithNamespaceManager resourceProperties;

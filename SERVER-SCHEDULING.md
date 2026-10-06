@@ -124,8 +124,10 @@ Lokal unter `C:\` bauen, nicht direkt vom Share (VSTO-Vertrauensstellung).
 
 `CalDavSynchronizer/AutoSetup/AccountAutoSetup.cs`, laeuft auf Knopfdruck:
 Menueband *CalDav Synchronizer* -> **Set up calendars**
-(`ComponentContainer.SetUpAccountsAsync`). Danach eine Zusammenfassung
-(gefunden / hinzugefuegt / reaktiviert / deaktiviert) und ein Abgleich.
+(`ComponentContainer.SetUpAccountsAsync`). Waehrenddessen ein Wartefenster,
+danach eine Zusammenfassung (gefunden / hinzugefuegt / reaktiviert /
+deaktiviert). Kein Abgleich danach (verlangsamt die Einrichtung); die Profile
+gleichen nach ihrem Intervall oder per *Synchronize now* ab.
 
 Zuerst lief sie bei jedem Start. Am 2026-10-06 hat Outlook das Add-in
 abgeschaltet (*caused Outlook to start slowly*, 1,3 s). Die Suche lief zwar
@@ -156,9 +158,21 @@ Der Versandschutz greift nur noch bei Profilen, die Outlook-Aenderungen
 hochladen; aus einem nur-lesend geteilten Kalender verschickt also weiter
 Outlook.
 
+Geteilte Kalender: sabre/dav meldet als `DAV:owner` den Empfaenger der
+Freigabe, nicht den Besitzer (Test 2026-10-06: Ordner hiess nur `Calendar`).
+Der Besitzer kommt jetzt aus `DAV:invite` (bzw. `CS:invite`), dort steht er als
+*organizer*. Ordnername = Besitzer-Adresse, bei eigenem Kalendernamen
+`besitzer - Name`.
+
 Einschraenkung: Einladungen funktionieren sauber nur aus dem
-Standardkalender. Ob geteilte Kalender mit Besitzer erkannt werden, haengt
-davon ab, ob sabre/dav fuer die Freigabe den Besitzer als `DAV:owner` meldet.
+Standardkalender.
+
+Test 2026-10-06: zwei Kalender und ein Adressbuch gefunden, eigener Kalender
+und Adressbuch auf die Standardordner, geteilter Kalender als Unterordner,
+nur lesend. Add-in trotz Start ohne Debugger erneut wegen langsamen Starts
+abgeschaltet - VSTO-Ladezeit, nicht unser Code (der laeuft erst danach).
+Abhilfe auf der VM:
+`reg add HKCU\Software\Microsoft\Office\16.0\Outlook\Resiliency\DoNotDisableAddinList /v CalDavSynchronizer /t REG_DWORD /d 1 /f`
 
 ## Naechste Schritte
 

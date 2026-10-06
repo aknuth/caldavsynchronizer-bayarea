@@ -287,12 +287,22 @@ namespace CalDavSynchronizer
         {
             var report = new List<string>();
             var generalOptions = _generalOptionsDataAccess.LoadOptions();
-            var newOptions = await _accountAutoSetup.GetUpdatedOptionsOrNull(_optionsDataAccess.Load(), generalOptions, report);
-            if (newOptions != null)
+            var progressForm = new AutoSetupProgressForm();
+            progressForm.Show();
+            try
             {
-                s_logger.Info("AutoSetup changed the profiles, applying them.");
-                await ApplyNewOptions(_optionsDataAccess.Load(), newOptions, generalOptions, Enumerable.Empty<OneTimeChangeCategoryTask>());
-                SynchronizeNowAsync();
+                var newOptions = await _accountAutoSetup.GetUpdatedOptionsOrNull(_optionsDataAccess.Load(), generalOptions, report);
+                if (newOptions != null)
+                {
+                    // No synchronization here, it would slow down the setup. The profiles synchronize at their interval
+                    // or on "Synchronize now".
+                    s_logger.Info("AutoSetup changed the profiles, applying them.");
+                    await ApplyNewOptions(_optionsDataAccess.Load(), newOptions, generalOptions, Enumerable.Empty<OneTimeChangeCategoryTask>());
+                }
+            }
+            finally
+            {
+                progressForm.Close();
             }
 
             if (report.Count == 0)

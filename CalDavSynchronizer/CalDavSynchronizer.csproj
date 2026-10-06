@@ -822,6 +822,9 @@
     <Compile Include="Implementation\Events\EventEntityMapper.cs" />
     <Compile Include="Implementation\Events\ServerSchedulingSendGuard.cs" />
     <Compile Include="AutoSetup\AccountAutoSetup.cs" />
+    <Compile Include="AutoSetup\AutoSetupProgressForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="ThisAddIn.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -121,11 +121,22 @@ namespace CalDavSynchronizer.AutoSetup
                 generalOptions.EnableClientCertificate,
                 generalOptions.AcceptInvalidCharsInServerResponse);
 
-            var calendars = (await new CalDavDataAccess(serverUrl, webDavClient).GetUserResourcesIncludingCalendarProxies(true)).CalendarResources;
+            var calDavDataAccess = new CalDavDataAccess(serverUrl, webDavClient);
+            var calendars = (await calDavDataAccess.GetUserResourcesIncludingCalendarProxies(true)).CalendarResources;
             var addressBooks = await new CardDavDataAccess(serverUrl, webDavClient, string.Empty, contentType => true).GetUserAddressBooksNoThrow(true);
             var summary = $"{emailAddress} ({serverUrl}): {calendars.Count} calendar(s), {addressBooks.Count} address book(s) found.";
             s_logger.Info($"AutoSetup: {summary}");
             report.Add(summary);
+
+            var calendarCollections = new List<Collection>();
+            foreach (var calendar in calendars)
+            {
+                var ownerEmail = await calDavDataAccess.GetSharingOwnerEmailOrNull(calendar.Uri)
+                                 ?? (calendar.OwnerProperties != null && calendar.OwnerProperties.IsSharedCalendar ? calendar.OwnerProperties.CalendarOwnerEmail : null);
+                if (string.Equals(ownerEmail, emailAddress, StringComparison.OrdinalIgnoreCase))
+                    ownerEmail = null;
+                calendarCollections.Add(new Collection(calendar.Uri, calendar.Name, ownerEmail, calendar.Privileges));
+            }
 
             var changed = false;
             using (var store = GenericComObjectWrapper.Create(account.DeliveryStore))
@@ -136,12 +147,7 @@ namespace CalDavSynchronizer.AutoSetup
                 {
                     using (var calendarFolder = GenericComObjectWrapper.Create((Folder) store.Inner.GetDefaultFolder(OlDefaultFolders.olFolderCalendar)))
                     {
-                        var collections = calendars.Select(c => new Collection(
-                            c.Uri,
-                            c.Name,
-                            c.OwnerProperties != null && c.OwnerProperties.IsSharedCalendar ? c.OwnerProperties.CalendarOwnerEmail : null,
-                            c.Privileges));
-                        changed |= Reconcile(collections, calendarFolder.Inner, OlDefaultFolders.olFolderCalendar, accountName, emailAddress, options, CreateEventMappingConfiguration, report);
+                        changed |= Reconcile(calendarCollections, calendarFolder.Inner, OlDefaultFolders.olFolderCalendar, accountName, emailAddress, options, CreateEventMappingConfiguration, report);
                     }
                 }
 
@@ -204,7 +210,7 @@ namespace CalDavSynchronizer.AutoSetup
                 }
 
                 var isDefault = collection.IsOwn && GetLastSegment(collection.Uri) == DefaultCollectionName;
-                var displayName = collection.OwnerEmailOrNull != null ? $"{collection.Name} ({collection.OwnerEmailOrNull})" : collection.Name;
+                var displayName = GetFolderName(collection);
 
                 string folderEntryId;
                 string folderStoreId;
@@ -276,6 +282,24 @@ namespace CalDavSynchronizer.AutoSetup
                     return folder;
                 }
             }
+        }
+
+        private static readonly HashSet<string> s_genericCollectionNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Calendar", "Default Calendar", "Kalender", "Contacts", "Default Address Book", "Kontakte", DefaultCollectionName
+        };
+
+        /// <summary>
+        /// Shared collections are named after their owner, since they are typically just called "Calendar",
+        /// which would show up as a second "Calendar" in Outlook. A specific name is appended.
+        /// </summary>
+        private static string GetFolderName(Collection collection)
+        {
+            if (collection.OwnerEmailOrNull == null)
+                return collection.Name;
+            if (string.IsNullOrEmpty(collection.Name) || s_genericCollectionNames.Contains(collection.Name))
+                return collection.OwnerEmailOrNull;
+            return $"{collection.OwnerEmailOrNull} - {collection.Name}";
         }
 
         private static string GetLastSegment(Uri uri) => uri.Segments.Last().TrimEnd('/');
