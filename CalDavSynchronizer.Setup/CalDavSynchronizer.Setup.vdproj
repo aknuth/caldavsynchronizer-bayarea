@@ -6576,24 +6576,24 @@
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
-        "ProductName" = "8:CalDavSynchronizer"
-        "ProductCode" = "8:{ED085E9E-07AC-4D26-9ED5-25B5C813DB91}"
-        "PackageCode" = "8:{4A344FF9-FB35-4FEC-8E44-056F33DE87FB}"
+        "ProductName" = "8:CalDavSynchronizer (Bay Area Edition)"
+        "ProductCode" = "8:{E6C95D5E-CF0C-4A36-A1EC-8725BFDB9808}"
+        "PackageCode" = "8:{D5F4E84A-1AB7-4F16-B98B-56F1707D3FD8}"
         "UpgradeCode" = "8:{691063F4-DD9A-4264-948D-3FBD2565572C}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:4.7.1"
-        "Manufacturer" = "8:Gerhard Zehetbauer"
+        "ProductVersion" = "8:5.0.0"
+        "Manufacturer" = "8:Bay Area Affiliates"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
-        "Title" = "8:CalDavSynchronizer"
+        "Title" = "8:CalDavSynchronizer (Bay Area Edition)"
         "Subject" = "8:"
-        "ARPCONTACT" = "8:Gerhard Zehetbauer"
+        "ARPCONTACT" = "8:Bay Area Affiliates"
         "Keywords" = "8:"
-        "ARPCOMMENTS" = "8:Synchronizes Appointments between Outlook and a CalDav Server"
+        "ARPCOMMENTS" = "8:Synchronizes Outlook with the Bay Area Affiliates CalDAV/CardDAV server. Based on CalDavSynchronizer by Gerhard Zehetbauer and Alexander Nimmervoll (AGPL-3.0)."
         "ARPURLINFOABOUT" = "8:"
         "ARPPRODUCTICON" = "8:"
         "ARPIconIndex" = "3:0"
@@ -6601,7 +6601,7 @@
         "UseSystemSearchPath" = "11:TRUE"
         "TargetPlatform" = "3:0"
         "PreBuildEvent" = "8:"
-        "PostBuildEvent" = "8:\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.15063.0\\x86\\signtool.exe\" sign /tr http://time.certum.pl /td sha256 /fd sha256 /sha1 \"bda017014f7e72d86332d0ee0a208b2e37bff492\" $(BuiltOuputPath) &\r\n\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.15063.0\\x86\\signtool.exe\" sign /tr http://time.certum.pl /td sha256 /fd sha256 /sha1 \"bda017014f7e72d86332d0ee0a208b2e37bff492\" $(ProjectDir)Release\\setup.exe"
+        "PostBuildEvent" = "8:"
         "RunPostBuildEvent" = "3:0"
         }
         "Registry"
@@ -6652,6 +6652,112 @@
             {
                 "Keys"
                 {
+                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_C2D70537776B46B1B2EDF941043FEFC2"
+                    {
+                    "Name" = "8:Software"
+                    "Condition" = "8:"
+                    "AlwaysCreate" = "11:FALSE"
+                    "DeleteAtUninstall" = "11:FALSE"
+                    "Transitive" = "11:FALSE"
+                    "Keys"
+                    {
+                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_C60107D38E5B4A3B970579B4BC4FF808"
+                    {
+                    "Name" = "8:Microsoft"
+                    "Condition" = "8:"
+                    "AlwaysCreate" = "11:FALSE"
+                    "DeleteAtUninstall" = "11:FALSE"
+                    "Transitive" = "11:FALSE"
+                    "Keys"
+                    {
+                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_E74BA2EEB5484F79A2D26DFCB5C7297C"
+                    {
+                    "Name" = "8:Office"
+                    "Condition" = "8:"
+                    "AlwaysCreate" = "11:FALSE"
+                    "DeleteAtUninstall" = "11:FALSE"
+                    "Transitive" = "11:FALSE"
+                    "Keys"
+                    {
+                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_ADBF35D589424BBC8D852191B52F1749"
+                    {
+                    "Name" = "8:16.0"
+                    "Condition" = "8:"
+                    "AlwaysCreate" = "11:FALSE"
+                    "DeleteAtUninstall" = "11:FALSE"
+                    "Transitive" = "11:FALSE"
+                    "Keys"
+                    {
+                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_67DD253D82424D58B5F37EAF1CB60901"
+                    {
+                    "Name" = "8:Outlook"
+                    "Condition" = "8:"
+                    "AlwaysCreate" = "11:FALSE"
+                    "DeleteAtUninstall" = "11:FALSE"
+                    "Transitive" = "11:FALSE"
+                    "Keys"
+                    {
+                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_3D50F6F6356549E89A16A2E6903134D5"
+                    {
+                    "Name" = "8:Resiliency"
+                    "Condition" = "8:"
+                    "AlwaysCreate" = "11:FALSE"
+                    "DeleteAtUninstall" = "11:FALSE"
+                    "Transitive" = "11:FALSE"
+                    "Keys"
+                    {
+                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_9B05CD81BF264C4E8B2B3CAA31496F76"
+                    {
+                    "Name" = "8:DoNotDisableAddinList"
+                    "Condition" = "8:"
+                    "AlwaysCreate" = "11:FALSE"
+                    "DeleteAtUninstall" = "11:FALSE"
+                    "Transitive" = "11:FALSE"
+                    "Keys"
+                    {
+                    }
+                    "Values"
+                    {
+                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_35CC029BEBAB4398BE48272AA838314B"
+                    {
+                    "Name" = "8:CalDavSynchronizer.1"
+                    "Condition" = "8:"
+                    "Transitive" = "11:FALSE"
+                    "ValueTypes" = "3:3"
+                    "Value" = "3:1"
+                    }
+                    }
+                    }
+                    }
+                    "Values"
+                    {
+                    }
+                    }
+                    }
+                    "Values"
+                    {
+                    }
+                    }
+                    }
+                    "Values"
+                    {
+                    }
+                    }
+                    }
+                    "Values"
+                    {
+                    }
+                    }
+                    }
+                    "Values"
+                    {
+                    }
+                    }
+                    }
+                    "Values"
+                    {
+                    }
+                    }
                 }
             }
             "HKCR"

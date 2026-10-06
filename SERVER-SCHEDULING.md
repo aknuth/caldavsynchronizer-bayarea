@@ -189,6 +189,24 @@ Abhilfe auf der VM:
   erscheint bei manuellem Abgleich immer (Schwelle 0), beim automatischen
   Abgleich weiter erst ab der Schwelle aus *General Options* (333).
 
+## Installer
+
+`CalDavSynchronizer.Setup/CalDavSynchronizer.Setup.vdproj` (braucht die
+VS-Erweiterung *Microsoft Visual Studio Installer Projects 2022*).
+
+- Produkt **CalDavSynchronizer (Bay Area Edition)**, Hersteller **Bay Area
+  Affiliates**, Version **5.0.0** (Assembly ebenfalls 5.0.0.0).
+- Upgrade-Kennung des Originals beibehalten: ein installiertes Original
+  (bis 4.7.1) wird automatisch ersetzt. Deshalb Version ueber 4.7.1, ein
+  Windows-Installer ersetzt nur aeltere Versionen.
+- Signierschritt des Originalautors (Certum-Zertifikat) entfernt.
+- Traegt das Add-in in `HKCU\Software\Microsoft\Office\16.0\Outlook\Resiliency\DoNotDisableAddinList`
+  ein. Das installierte Add-in heisst in der Registry `CalDavSynchronizer.1`
+  (der Debug-Build `CalDavSynchronizer`). Gilt fuer den Benutzer, der
+  installiert.
+- Offen: eigenes Zertifikat und VSTO-Vertrauensliste (Inclusion List), damit
+  Outlook beim ersten Start nicht nachfragt.
+
 ## Naechste Schritte
 
 1. **Abspecken auf sabre/dav.** Automatische Einrichtung (siehe oben) ist
