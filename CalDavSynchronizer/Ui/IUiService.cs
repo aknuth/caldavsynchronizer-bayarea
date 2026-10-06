@@ -32,7 +32,6 @@ namespace CalDavSynchronizer.Ui
         bool ShowOptions(OptionsCollectionViewModel viewModel);
         IProfileType QueryProfileType(IReadOnlyCollection<IProfileType> profileTypes);
         void ShowErrorDialog(string errorMessage, string title);
-        void ShowOXInfoDialog();
         string ShowSaveDialog(string title);
         string ShowOpenDialog(string title);
         void ShowReport(string title, string reportText);

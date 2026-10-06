@@ -37,8 +37,6 @@ using CalDavSynchronizer.Implementation.DistributionLists;
 using CalDavSynchronizer.Implementation.DistributionLists.Sogo;
 using CalDavSynchronizer.Implementation.DistributionLists.VCard;
 using CalDavSynchronizer.Implementation.Events;
-using CalDavSynchronizer.Implementation.GoogleContacts;
-using CalDavSynchronizer.Implementation.GoogleTasks;
 using CalDavSynchronizer.Implementation.Tasks;
 using CalDavSynchronizer.Implementation.TimeRangeFiltering;
 using CalDavSynchronizer.Implementation.TimeZones;
@@ -60,13 +58,10 @@ using GenSync.Synchronization;
 using GenSync.Synchronization.StateCreationStrategies.ConflictStrategies;
 using GenSync.Synchronization.StateFactories;
 using GenSync.Utilities;
-using Google.Apis.Tasks.v1.Data;
-using Google.Contacts;
 using log4net;
 using Microsoft.Office.Interop.Outlook;
 using Thought.vCards;
 using ContactEntityMapper = CalDavSynchronizer.Implementation.Contacts.ContactEntityMapper;
-using Task = Google.Apis.Tasks.v1.Data.Task;
 
 namespace CalDavSynchronizer.Scheduling
 {
@@ -146,34 +141,14 @@ namespace CalDavSynchronizer.Scheduling
                     synchronizer = await CreateEventSynchronizer(options, generalOptions, availableEventSynchronizerComponents, profileType);
                     break;
                 case OlItemType.olTaskItem:
-                    if (options.ServerAdapterType == ServerAdapterType.GoogleTaskApi)
-                    {
-                        var availableGoogleTaskApiSynchronizerComponents = new AvailableGoogleTaskApiSynchronizerComponents();
-                        synchronizerComponents = availableGoogleTaskApiSynchronizerComponents;
-                        synchronizer = await CreateGoogleTaskSynchronizer(options, availableGoogleTaskApiSynchronizerComponents, generalOptions, profileType);
-                    }
-                    else
-                    {
-                        var availableTaskSynchronizerComponents = new AvailableTaskSynchronizerComponents();
-                        synchronizerComponents = availableTaskSynchronizerComponents;
-                        synchronizer = CreateTaskSynchronizer(options, generalOptions, availableTaskSynchronizerComponents, profileType);
-                    }
-
+                    var availableTaskSynchronizerComponents = new AvailableTaskSynchronizerComponents();
+                    synchronizerComponents = availableTaskSynchronizerComponents;
+                    synchronizer = CreateTaskSynchronizer(options, generalOptions, availableTaskSynchronizerComponents, profileType);
                     break;
                 case OlItemType.olContactItem:
-                    if (options.ServerAdapterType == ServerAdapterType.GoogleContactApi)
-                    {
-                        var availableGoogleContactSynchronizerSynchronizerComponents = new AvailableGoogleContactSynchronizerSynchronizerComponents();
-                        synchronizerComponents = availableGoogleContactSynchronizerSynchronizerComponents;
-                        synchronizer = await CreateGoogleContactSynchronizer(options, availableGoogleContactSynchronizerSynchronizerComponents, generalOptions, profileType);
-                    }
-                    else
-                    {
-                        var availableContactSynchronizerComponents = new AvailableContactSynchronizerComponents();
-                        synchronizerComponents = availableContactSynchronizerComponents;
-                        synchronizer = CreateContactSynchronizer(options, generalOptions, availableContactSynchronizerComponents, profileType);
-                    }
-
+                    var availableContactSynchronizerComponents = new AvailableContactSynchronizerComponents();
+                    synchronizerComponents = availableContactSynchronizerComponents;
+                    synchronizer = CreateContactSynchronizer(options, generalOptions, availableContactSynchronizerComponents, profileType);
                     break;
                 default:
                     throw new NotSupportedException(
@@ -249,7 +224,6 @@ namespace CalDavSynchronizer.Scheduling
             switch (serverAdapterType)
             {
                 case ServerAdapterType.WebDavHttpClientBased:
-                case ServerAdapterType.WebDavHttpClientBasedWithGoogleOAuth:
                     var productAndVersion = GetProductAndVersion();
                     return new DataAccess.HttpClientBasedClient.WebDavClient(
                         () => CreateHttpClient(username, password, serverUrl, timeout, serverAdapterType, proxyOptions, preemptiveAuthentication, forceBasicAuthentication, enableClientCertificate),
@@ -328,8 +302,6 @@ namespace CalDavSynchronizer.Scheduling
 
                     httpClient.Timeout = calDavConnectTimeout;
                     return httpClient;
-                case ServerAdapterType.WebDavHttpClientBasedWithGoogleOAuth:
-                    return await OAuth.Google.GoogleHttpClientFactory.CreateHttpClient(username, GetProductWithVersion(), proxy);
                 default:
                     throw new ArgumentOutOfRangeException("serverAdapterType");
             }
@@ -364,12 +336,6 @@ namespace CalDavSynchronizer.Scheduling
         {
             var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
             return Tuple.Create("CalDavSynchronizer", string.Format("{0}.{1}", version.Major, version.Minor));
-        }
-
-        private static string GetProductWithVersion()
-        {
-            var productAndVersion = GetProductAndVersion();
-            return string.Format("{0}/{1}", productAndVersion.Item1, productAndVersion.Item2);
         }
 
         /// <remarks>
@@ -413,7 +379,7 @@ namespace CalDavSynchronizer.Scheduling
                 new iCalendarSerializer(),
                 CalDavRepository.EntityType.Event,
                 dateTimeRangeProvider,
-                options.ServerAdapterType == ServerAdapterType.WebDavHttpClientBasedWithGoogleOAuth,
+                false,
                 btypeVersionComparer);
 
             componentsToFill.CalDavRepository = btypeRepository;
@@ -624,85 +590,6 @@ namespace CalDavSynchronizer.Scheduling
 
             return new OutlookSynchronizer<WebResourceName, string>(
                 new NullContextSynchronizerDecorator<string, DateTime, ITaskItemWrapper, WebResourceName, string, IICalendar>(synchronizer));
-        }
-
-        private async Task<IOutlookSynchronizer> CreateGoogleTaskSynchronizer(Options options, AvailableGoogleTaskApiSynchronizerComponents componentsToFill, GeneralOptions generalOptions, IProfileType profileType)
-        {
-            var mappingParameters = GetMappingParameters(options, profileType.CreateTaskMappingConfiguration);
-
-            var atypeRepository = new OutlookTaskRepository(_outlookSession, options.OutlookFolderEntryId, options.OutlookFolderStoreId, _daslFilterProvider, mappingParameters, _queryFolderStrategy, _comWrapperFactory, generalOptions.IncludeCustomMessageClasses);
-
-            componentsToFill.OutlookRepository = atypeRepository;
-
-            IWebProxy proxy = options.ProxyOptions != null ? CreateProxy(options.ProxyOptions) : null;
-
-            var tasksService = await OAuth.Google.GoogleHttpClientFactory.LoginToGoogleTasksService(options.UserName, proxy);
-
-            TaskList taskList;
-            try
-            {
-                taskList = tasksService.Tasklists.Get(options.CalenderUrl).Execute();
-            }
-            catch (Google.GoogleApiException)
-            {
-                s_logger.ErrorFormat($"Profile '{options.Name}' (Id: '{options.Id}'): task list '{options.CalenderUrl}' not found.");
-                throw;
-            }
-
-            var btypeRepository = new GoogleTaskRepository(tasksService, taskList);
-
-            componentsToFill.ServerRepository = btypeRepository;
-
-            var relationDataFactory = new GoogleTaskRelationDataFactory();
-            var syncStateFactory = new EntitySyncStateFactory<string, DateTime, ITaskItemWrapper, string, string, Task, int>(
-                new GoogleTaskMapper(),
-                relationDataFactory,
-                ExceptionHandler.Instance);
-
-            var storageDataDirectory = _profileDataDirectoryFactory(options.Id);
-
-            var btypeIdEqualityComparer = EqualityComparer<string>.Default;
-            var atypeIdEqualityComparer = EqualityComparer<string>.Default;
-
-            var atypeWriteRepository = BatchEntityRepositoryAdapter.Create(atypeRepository, _exceptionHandlingStrategy);
-            var btypeWriteRepository = BatchEntityRepositoryAdapter.Create(btypeRepository, _exceptionHandlingStrategy);
-
-            var entityRelationDataAccess = new EntityRelationDataAccess<string, DateTime, GoogleTaskRelationData, string, string>(storageDataDirectory);
-            componentsToFill.EntityRelationDataAccess = entityRelationDataAccess;
-            var btypeVersionComparer = EqualityComparer<string>.Default;
-
-            var synchronizer = new Synchronizer<string, DateTime, ITaskItemWrapper, string, string, Task, int, TaskEntityMatchData, Task, int, string>(
-                atypeRepository,
-                btypeRepository,
-                atypeWriteRepository,
-                btypeWriteRepository,
-                InitialSyncStateCreationStrategyFactory<string, DateTime, ITaskItemWrapper, string, string, Task, int>.Create(
-                    syncStateFactory,
-                    syncStateFactory.Environment,
-                    options.SynchronizationMode,
-                    options.ConflictResolution,
-                    e => new GoogleTaskConflictInitialSyncStateCreationStrategyAutomatic(e)),
-                entityRelationDataAccess,
-                relationDataFactory,
-                new InitialGoogleTastEntityMatcher(btypeIdEqualityComparer),
-                atypeIdEqualityComparer,
-                btypeIdEqualityComparer,
-                _totalProgressFactory,
-                _atypeVersionComparer,
-                btypeVersionComparer,
-                syncStateFactory,
-                _exceptionHandlingStrategy,
-                new TaskEntityMatchDataFactory(),
-                IdentityMatchDataFactory<Task>.Instance,
-                options.EffectiveChunkSize,
-                CreateChunkedExecutor(options),
-                FullEntitySynchronizationLoggerFactory.Create<string, ITaskItemWrapper, string, Task>(generalOptions.LogEntityNames ? EntityLogMessageFactory.Instance : NullEntityLogMessageFactory<ITaskItemWrapper, Task>.Instance),
-                new VersionAwareToStateAwareEntityRepositoryAdapter<string, DateTime, int, int>(atypeRepository, atypeIdEqualityComparer, _atypeVersionComparer),
-                new VersionAwareToStateAwareEntityRepositoryAdapter<string, string, int, string>(btypeRepository, btypeIdEqualityComparer, btypeVersionComparer),
-                NullStateTokensDataAccess<int, string>.Instance);
-
-            return new OutlookSynchronizer<string, string>(
-                new NullContextSynchronizerDecorator<string, DateTime, ITaskItemWrapper, string, string, Task>(synchronizer));
         }
 
         private IOutlookSynchronizer CreateContactSynchronizer(Options options, GeneralOptions generalOptions, AvailableContactSynchronizerComponents componentsToFill, IProfileType profileType)
@@ -1010,95 +897,6 @@ namespace CalDavSynchronizer.Scheduling
                 NullStateTokensDataAccess<int, int>.Instance);
 
             return synchronizer;
-        }
-
-        private async Task<IOutlookSynchronizer> CreateGoogleContactSynchronizer(Options options, AvailableGoogleContactSynchronizerSynchronizerComponents componentsToFill, GeneralOptions generalOptions, IProfileType profileType)
-        {
-            var atypeRepository = new OutlookContactRepository<IGoogleContactContext>(
-                _outlookSession,
-                options.OutlookFolderEntryId,
-                options.OutlookFolderStoreId,
-                _daslFilterProvider,
-                _queryFolderStrategy,
-                _comWrapperFactory,
-                generalOptions.IncludeCustomMessageClasses);
-
-            componentsToFill.OutlookContactRepository = atypeRepository;
-
-            IWebProxy proxy = options.ProxyOptions != null ? CreateProxy(options.ProxyOptions) : null;
-
-            var googleApiExecutor = new GoogleApiOperationExecutor(await OAuth.Google.GoogleHttpClientFactory.LoginToContactsService(options.UserName, proxy));
-
-            var mappingParameters = GetMappingParameters(options, profileType.CreateContactMappingConfiguration);
-
-            var atypeIdEqualityComparer = EqualityComparer<string>.Default;
-            var btypeIdEqualityComparer = EqualityComparer<string>.Default;
-
-            var btypeRepository = new GoogleContactRepository(
-                googleApiExecutor,
-                options.UserName,
-                mappingParameters,
-                btypeIdEqualityComparer,
-                new ChunkedExecutor(Math.Min(options.ChunkSize, GoogleProfile.MaximumWriteBatchSize)),
-                new ChunkedExecutor(options.ChunkSize));
-
-            componentsToFill.GoogleContactRepository = btypeRepository;
-            componentsToFill.GoogleApiOperationExecutor = googleApiExecutor;
-
-            var entityMapper = new GoogleContactEntityMapper(mappingParameters);
-
-            var entityRelationDataFactory = new GoogleContactRelationDataFactory();
-
-            var syncStateFactory = new EntitySyncStateFactory<string, DateTime, IContactItemWrapper, string, GoogleContactVersion, GoogleContactWrapper, IGoogleContactContext>(
-                entityMapper,
-                entityRelationDataFactory,
-                ExceptionHandler.Instance);
-
-            var storageDataDirectory = _profileDataDirectoryFactory(options.Id);
-
-            var storageDataAccess = new EntityRelationDataAccess<string, DateTime, GoogleContactRelationData, string, GoogleContactVersion>(storageDataDirectory);
-
-            componentsToFill.GoogleContactsEntityRelationDataAccess = storageDataAccess;
-
-            var atypeWriteRepository = BatchEntityRepositoryAdapter.Create(atypeRepository, _exceptionHandlingStrategy);
-
-            var googleContactVersionComparer = new GoogleContactVersionComparer();
-            var synchronizer = new Synchronizer<string, DateTime, IContactItemWrapper, string, GoogleContactVersion, GoogleContactWrapper, IGoogleContactContext, ContactMatchData, GoogleContactWrapper, int, int>(
-                atypeRepository,
-                btypeRepository,
-                atypeWriteRepository,
-                btypeRepository,
-                InitialSyncStateCreationStrategyFactory<string, DateTime, IContactItemWrapper, string, GoogleContactVersion, GoogleContactWrapper, IGoogleContactContext>.Create(
-                    syncStateFactory,
-                    syncStateFactory.Environment,
-                    options.SynchronizationMode,
-                    options.ConflictResolution,
-                    e => new GoogleContactConflictInitialSyncStateCreationStrategyAutomatic(e)),
-                storageDataAccess,
-                entityRelationDataFactory,
-                new InitialGoogleContactEntityMatcher(btypeIdEqualityComparer),
-                atypeIdEqualityComparer,
-                btypeIdEqualityComparer,
-                _totalProgressFactory,
-                _atypeVersionComparer,
-                googleContactVersionComparer,
-                syncStateFactory,
-                _exceptionHandlingStrategy,
-                new ContactMatchDataFactory(),
-                IdentityMatchDataFactory<GoogleContactWrapper>.Instance,
-                options.EffectiveChunkSize,
-                CreateChunkedExecutor(options),
-                FullEntitySynchronizationLoggerFactory.Create<string, IContactItemWrapper, string, GoogleContactWrapper>(generalOptions.LogEntityNames ? EntityLogMessageFactory.Instance : NullEntityLogMessageFactory<IContactItemWrapper, GoogleContactWrapper>.Instance),
-                new VersionAwareToStateAwareEntityRepositoryAdapter<string, DateTime, IGoogleContactContext, int>(atypeRepository, atypeIdEqualityComparer, _atypeVersionComparer),
-                new VersionAwareToStateAwareEntityRepositoryAdapter<string, GoogleContactVersion, IGoogleContactContext, int>(btypeRepository, btypeIdEqualityComparer, googleContactVersionComparer),
-                NullStateTokensDataAccess<int, int>.Instance);
-
-            var googleContactContextFactory = new GoogleContactContextFactory(googleApiExecutor, btypeIdEqualityComparer, options.UserName, options.ChunkSize);
-            componentsToFill.GoogleContactContextFactory = googleContactContextFactory;
-            return new OutlookSynchronizer<string, GoogleContactVersion>(
-                new ContextCreatingSynchronizerDecorator<string, DateTime, IContactItemWrapper, string, GoogleContactVersion, GoogleContactWrapper, IGoogleContactContext>(
-                    synchronizer,
-                    googleContactContextFactory));
         }
 
         private static IChunkedExecutor CreateChunkedExecutor(Options options)

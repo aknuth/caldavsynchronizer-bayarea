@@ -18,10 +18,8 @@
 using System.Linq;
 using CalDavSynchronizer.Implementation.ComWrappers;
 using CalDavSynchronizer.Implementation.DistributionLists.Sogo;
-using CalDavSynchronizer.Implementation.GoogleContacts;
 using DDay.iCal;
 using GenSync.Logging;
-using Google.Apis.Tasks.v1.Data;
 using Thought.vCards;
 
 namespace CalDavSynchronizer.Implementation.Common
@@ -30,8 +28,6 @@ namespace CalDavSynchronizer.Implementation.Common
         IEntityLogMessageFactory<IAppointmentItemWrapper, IICalendar>,
         IEntityLogMessageFactory<ITaskItemWrapper, IICalendar>,
         IEntityLogMessageFactory<IContactItemWrapper, vCard>,
-        IEntityLogMessageFactory<ITaskItemWrapper, Task>,
-        IEntityLogMessageFactory<IContactItemWrapper, GoogleContactWrapper>,
         IEntityLogMessageFactory<IDistListItemWrapper, DistributionList>,
         IEntityLogMessageFactory<IDistListItemWrapper, vCard>
     {
@@ -51,11 +47,6 @@ namespace CalDavSynchronizer.Implementation.Common
             return entity.Inner.Subject;
         }
 
-        public string GetBDisplayNameOrNull(Task entity)
-        {
-            return entity.Title;
-        }
-
         public string GetBDisplayNameOrNull(IICalendar entity)
         {
             return entity.Calendar.Events.FirstOrDefault()?.Summary ?? entity.Calendar.Todos.FirstOrDefault()?.Summary;
@@ -64,11 +55,6 @@ namespace CalDavSynchronizer.Implementation.Common
         public string GetADisplayNameOrNull(IContactItemWrapper entity)
         {
             return entity.Inner.FullName;
-        }
-
-        public string GetBDisplayNameOrNull(GoogleContactWrapper entity)
-        {
-            return entity.Contact.Name.FullName;
         }
 
         public string GetBDisplayNameOrNull(vCard entity)

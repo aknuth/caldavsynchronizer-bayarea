@@ -58,12 +58,6 @@ namespace CalDavSynchronizer.Ui.Options.ViewModels
                     return;
                 }
 
-                if (StringComparer.InvariantCultureIgnoreCase.Equals(ProfileTypes.Single(p => p.IsSelected).ProfileType.Name, "Open-Xchange"))
-                {
-                    _uiService.ShowOXInfoDialog();
-                    return;
-                }
-
                 SelectedProfile = ProfileTypes.Single(p => p.IsSelected).ProfileType;
             }
 
@@ -73,24 +67,7 @@ namespace CalDavSynchronizer.Ui.Options.ViewModels
         public static SelectProfileViewModel DesignInstance => new SelectProfileViewModel(
             new[]
                 {
-                    "Generic CalDAV_CardDAV",
-                    "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_iCloud.png",
-                    "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_cozy.png",
-                    "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_easyproject.png",
-                    "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_fruux.png",
-                    "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_gmx.png",
-                    "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_google.png",
-                    "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_landmarks.png",
-                    "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_nextcloud.png",
-                    "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_posteo.png",
-                    "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_sarenet.png",
-                    "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_sogo.png",
-                    "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_yandex.png",
-                    "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_mailbox.org.png",
-                    "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_webde.png",
-                    "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_smartermail.png",
-                    "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_kolab.png",
-                    "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_untermStrich.png"
+                    "Generic CalDAV_CardDAV"
                 }
                 .Select(u => new DesignProfileType(Path.GetFileName(u), u))
                 .ToArray(),

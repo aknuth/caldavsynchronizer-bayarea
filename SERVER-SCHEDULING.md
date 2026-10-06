@@ -224,6 +224,25 @@ abgeschaltet. Ein gekauftes Zertifikat waere nur noetig gegen die Windows-
 Warnung beim Ausfuehren von `setup.exe` und fuer weitere Windows-Benutzer am
 selben PC (die Vertrauensliste gilt nur fuer den installierenden).
 
+## Abspecken
+
+**Schritt 1 (2026-10-06):** Google, Swisscom und alle Anbieterprofile ausser
+*Generic CalDAV/CardDAV* entfernt.
+
+- Projekte `CalDavSynchronizer.OAuth.Google` und `.OAuth.Swisscom` geloescht,
+  ebenso die Google-Synchronisation (Kontakte und Aufgaben ueber die Google-
+  API), alle Profiltypen in `ProfileTypes/ConcreteTypes` ausser
+  `GenericProfile`, die Mehrfach-Vorlagen fuer Google/Kolab/EasyProject und der
+  Open-Xchange-Infodialog. Rund 90 Dateien.
+- NuGet: `Google.Apis.Tasks.v1`, `Google.GData.Contacts`,
+  `Zlib.Portable.Signed` entfernt; `Newtonsoft.Json` jetzt direkt referenziert
+  (kam vorher nur ueber die Google-Pakete).
+- `ServerAdapterType`: die Google-Werte bleiben im Enum, damit alte
+  Profildateien mit Google-Profilen beim Start noch geladen werden koennen.
+- Profile alter Anbietertypen fallen auf *Generic* zurueck.
+- Setup: Google/OAuth-Abhaengigkeiten und der Swisscom-Sprachdatei-Eintrag
+  entfernt.
+
 ## Naechste Schritte
 
 1. **Abspecken auf sabre/dav.** Automatische Einrichtung (siehe oben) ist

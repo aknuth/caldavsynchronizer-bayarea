@@ -19,8 +19,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenSync.UnitTests", "GenSyn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalDavDataAccessIntegrationTests", "CalDavDataAccessIntegrationTests\CalDavDataAccessIntegrationTests.csproj", "{BE747238-9388-43CE-AF64-536C64442EB9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalDavSynchronizer.OAuth.Google", "CalDavSynchronizer.OAuth.Google\CalDavSynchronizer.OAuth.Google.csproj", "{230914CF-6FF1-4B09-A831-C37C6B41D127}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalDavSynchronizer.CustomInstaller", "CalDavSynchronizer.CustomInstaller\CalDavSynchronizer.CustomInstaller.csproj", "{0C682D77-1CBB-4336-8F6E-CDDA9B6C0C97}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalDavSynchronizer.Conversions", "CalDavSynchronizer.Conversions\CalDavSynchronizer.Conversions.csproj", "{71021DE1-8DC8-4414-AF56-FE821DD92F47}"
@@ -32,8 +30,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thought.vCards.UnitTests", "Thought.vCards.UnitTests\Thought.vCards.UnitTests.csproj", "{D7A4725B-CB7B-4F10-8DD1-DE2E4AECA498}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalDavSynchronizer.IntegrationTests", "CalDavSynchronizer.IntegrationTests\CalDavSynchronizer.IntegrationTests.csproj", "{13B5D6BF-EB84-4570-A3E4-1F272C0F2BC0}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalDavSynchronizer.OAuth.Swisscom", "CalDavSynchronizer.OAuth.Swisscom\CalDavSynchronizer.OAuth.Swisscom.csproj", "{424F803E-B641-4473-B9C3-B8DF40E0B3B3}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Wacton.Unicolour", "Unicolour\Wacton.Unicolour.csproj", "{A8F93F45-42EA-4D4C-8DD1-B03410CC7C55}"
 EndProject
@@ -65,10 +61,6 @@ Global
 		{BE747238-9388-43CE-AF64-536C64442EB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BE747238-9388-43CE-AF64-536C64442EB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BE747238-9388-43CE-AF64-536C64442EB9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{230914CF-6FF1-4B09-A831-C37C6B41D127}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{230914CF-6FF1-4B09-A831-C37C6B41D127}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{230914CF-6FF1-4B09-A831-C37C6B41D127}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{230914CF-6FF1-4B09-A831-C37C6B41D127}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0C682D77-1CBB-4336-8F6E-CDDA9B6C0C97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0C682D77-1CBB-4336-8F6E-CDDA9B6C0C97}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0C682D77-1CBB-4336-8F6E-CDDA9B6C0C97}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -93,10 +85,6 @@ Global
 		{13B5D6BF-EB84-4570-A3E4-1F272C0F2BC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{13B5D6BF-EB84-4570-A3E4-1F272C0F2BC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{13B5D6BF-EB84-4570-A3E4-1F272C0F2BC0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{424F803E-B641-4473-B9C3-B8DF40E0B3B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{424F803E-B641-4473-B9C3-B8DF40E0B3B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{424F803E-B641-4473-B9C3-B8DF40E0B3B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{424F803E-B641-4473-B9C3-B8DF40E0B3B3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A8F93F45-42EA-4D4C-8DD1-B03410CC7C55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A8F93F45-42EA-4D4C-8DD1-B03410CC7C55}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A8F93F45-42EA-4D4C-8DD1-B03410CC7C55}.Release|Any CPU.ActiveCfg = Release|Any CPU

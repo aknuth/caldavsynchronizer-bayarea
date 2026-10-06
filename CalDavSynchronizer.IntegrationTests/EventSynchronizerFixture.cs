@@ -153,14 +153,6 @@ namespace CalDavSynchronizer.IntegrationTests
             _testComponentContainer.AssertNoComObjectInstancesOpen();
         }
 
-        [Ignore("This does currently not work")]
-        [Test]
-        [Apartment(System.Threading.ApartmentState.STA)]
-        public async Task SynchronizeToServer_AllDayEventsWithTimeRangeFilter_DoesntDuplicateOrDeleteBoundaryEvents_Google()
-        {
-            await SynchronizeToServer_AllDayEventsWithTimeRangeFilter_DoesntDuplicateOrDeleteBoundaryEvents(_testComponentContainer.TestOptionsFactory.CreateGoogleEvents());
-        }
-
         [Test]
         [Apartment(System.Threading.ApartmentState.STA)]
         public async Task SynchronizeToServer_AllDayEventsWithTimeRangeFilter_DoesntDuplicateOrDeleteBoundaryEvents_Sogo()

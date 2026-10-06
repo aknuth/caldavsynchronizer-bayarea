@@ -70,12 +70,12 @@ namespace CalDavSynchronizer.ProfileTypes
 
         protected virtual OptionsModel CreateModel(Contracts.Options data)
         {
-            return new OptionsModel(OptionTasks, OutlookAccountPasswordProvider, data, GeneralOptions, this, false, SessionData, ServerSettingsDetector.Value);
+            return new OptionsModel(OptionTasks, OutlookAccountPasswordProvider, data, GeneralOptions, this, SessionData, ServerSettingsDetector.Value);
         }
 
         protected virtual OptionsModel CreatePrototypeModel(Contracts.Options data)
         {
-            return new OptionsModel(OptionTasks, OutlookAccountPasswordProvider, data, GeneralOptions, this, false, SessionData, ServerSettingsDetector.Value);
+            return new OptionsModel(OptionTasks, OutlookAccountPasswordProvider, data, GeneralOptions, this, SessionData, ServerSettingsDetector.Value);
         }
 
         public virtual IOptionsViewModel CreateViewModel(OptionsModel model)

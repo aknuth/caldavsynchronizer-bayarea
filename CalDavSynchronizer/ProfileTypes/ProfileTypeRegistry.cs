@@ -19,7 +19,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using CalDavSynchronizer.ProfileTypes.ConcreteTypes;
-using CalDavSynchronizer.ProfileTypes.ConcreteTypes.Swisscom;
 using log4net;
 
 namespace CalDavSynchronizer.ProfileTypes
@@ -31,48 +30,23 @@ namespace CalDavSynchronizer.ProfileTypes
         public static readonly IProfileTypeRegistry Instance = Create();
 
         private readonly GenericProfile _genericProfile;
-        private readonly GoogleProfile _googleProfile;
         private readonly IReadOnlyDictionary<string, IProfileType> _profileTypeByName = new Dictionary<string, IProfileType>();
 
-        private ProfileTypeRegistry(IReadOnlyList<IProfileType> allTypes, GenericProfile genericProfile, GoogleProfile googleProfile)
+        private ProfileTypeRegistry(IReadOnlyList<IProfileType> allTypes, GenericProfile genericProfile)
         {
             _genericProfile = genericProfile;
-            _googleProfile = googleProfile;
             AllTypes = allTypes;
             _profileTypeByName = allTypes.ToDictionary(GetProfileTypeName);
         }
 
+        /// <summary>
+        /// Only the generic CalDAV/CardDAV type is left. Profiles of the removed provider types (Google, iCloud, ...)
+        /// fall back to it in DetermineType.
+        /// </summary>
         private static IProfileTypeRegistry Create()
         {
             var generic = new GenericProfile();
-            var google = new GoogleProfile();
-            var all = new List<IProfileType> {generic, google};
-            all.Add(new CalendariCloudProfile());
-            all.Add(new ContactsiCloudProfile());
-            all.Add(new FruuxProfile());
-            all.Add(new PosteoProfile());
-            all.Add(new YandexProfile());
-            all.Add(new GmxCalendarProfile());
-            all.Add(new SarenetProfile());
-            all.Add(new LandmarksProfile());
-            all.Add(new SogoProfile());
-            all.Add(new CozyProfile());
-            all.Add(new NextcloudProfile());
-            all.Add(new MailboxOrgProfile());
-            all.Add(new OpenXchangeProfile());
-            all.Add(new EasyProjectProfile());
-            all.Add(new WebDeProfile());
-            all.Add(new SmarterMailProfile());
-            all.Add(new MailDeProfile());
-            all.Add(new KolabProfile());
-            all.Add(new SwisscomProfile());
-            all.Add(new EGroupwareProfile());
-            all.Add(new FastMailProfile());
-            all.Add(new untermStrichProfile());
-            all.Add(new ArubaProfile());
-            all.Add(new PostasslProfile());
-
-            return new ProfileTypeRegistry(all, generic, google);
+            return new ProfileTypeRegistry(new List<IProfileType> {generic}, generic);
         }
 
         public IReadOnlyList<IProfileType> AllTypes { get; }
@@ -91,10 +65,7 @@ namespace CalDavSynchronizer.ProfileTypes
                 }
             }
 
-            if (_googleProfile.IsGoogleProfile(data))
-                return _googleProfile;
-            else
-                return _genericProfile;
+            return _genericProfile;
         }
 
 

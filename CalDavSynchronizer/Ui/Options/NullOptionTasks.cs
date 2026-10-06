@@ -57,11 +57,6 @@ namespace CalDavSynchronizer.Ui.Options
             throw new NotImplementedException();
         }
 
-        public Task<string> TestGoogleConnection(OptionsModel options, string url)
-        {
-            throw new NotImplementedException();
-        }
-
         public Task<string> TestWebDavConnection(OptionsModel options)
         {
             throw new NotImplementedException();

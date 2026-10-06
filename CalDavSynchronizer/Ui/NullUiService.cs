@@ -58,10 +58,6 @@ namespace CalDavSynchronizer.Ui
             return null;
         }
 
-        public void ShowOXInfoDialog()
-        {
-        }
-
         public string ShowOpenDialog(string title)
         {
             return null;

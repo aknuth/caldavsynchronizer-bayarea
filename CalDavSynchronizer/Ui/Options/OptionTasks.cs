@@ -26,12 +26,10 @@ using CalDavSynchronizer.DataAccess;
 using CalDavSynchronizer.Globalization;
 using CalDavSynchronizer.Implementation;
 using CalDavSynchronizer.Implementation.ComWrappers;
-using CalDavSynchronizer.OAuth.Google;
 using CalDavSynchronizer.Ui.ConnectionTests;
 using CalDavSynchronizer.Ui.Options.Models;
 using CalDavSynchronizer.Ui.Options.ResourceSelection.ViewModels;
 using CalDavSynchronizer.Utilities;
-using Google.Apis.Tasks.v1.Data;
 using log4net;
 using Microsoft.Office.Interop.Outlook;
 using Exception = System.Exception;
@@ -46,7 +44,6 @@ namespace CalDavSynchronizer.Ui.Options
 
         public static readonly string ConnectionTestCaption = Strings.Get($"Test settings");
         public static readonly string CreateDavResourceCaption = Strings.Get($"Create DAV server resource");
-        public const string GoogleDavBaseUrl = "https://apidata.googleusercontent.com/caldav/v2";
 
         private readonly IEnumDisplayNameProvider _enumDisplayNameProvider;
         private readonly NameSpace _session;
@@ -711,93 +708,6 @@ namespace CalDavSynchronizer.Ui.Options
             }
         }
 
-        public async Task<string> TestGoogleConnection(OptionsModel options, string url)
-        {
-            if (options.SelectedFolderOrNull == null)
-            {
-                MessageBox.Show(Strings.Get($"Please select an Outlook folder to specify the item type for this profile"), ConnectionTestCaption);
-                return url;
-            }
-
-            var outlookFolderType = options.SelectedFolderOrNull.DefaultItemType;
-
-            StringBuilder errorMessageBuilder = new StringBuilder();
-
-            if (!ValidateEmailAddress(errorMessageBuilder, options.EmailAddress, false))
-            {
-                MessageBox.Show(errorMessageBuilder.ToString(), Strings.Get($"The Email address is invalid"), MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return url;
-            }
-
-            if (outlookFolderType == OlItemType.olTaskItem)
-            {
-                return await TestGoogleTaskConnection(options, errorMessageBuilder, outlookFolderType, url);
-            }
-
-            if (outlookFolderType == OlItemType.olContactItem && options.UseGoogleNativeApi)
-            {
-                return await TestGoogleContactsConnection(options, outlookFolderType, url);
-            }
-
-            if (!ValidateWebDavUrl(url, errorMessageBuilder, false))
-            {
-                MessageBox.Show(errorMessageBuilder.ToString(), Strings.Get($"The CalDav/CardDav URL is invalid"), MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return url;
-            }
-
-            var enteredUri = new Uri(url);
-            var webDavClient = options.CreateWebDavClient(enteredUri);
-
-            Uri autoDiscoveredUrl;
-
-            if (ConnectionTester.RequiresAutoDiscovery(enteredUri))
-            {
-                var autoDiscoveryResult = await DoAutoDiscovery(enteredUri, webDavClient, false, true, outlookFolderType);
-                switch (autoDiscoveryResult.Status)
-                {
-                    case AutoDiscoverResultStatus.UserCancelled:
-                        return url;
-                    case AutoDiscoverResultStatus.ResourceSelected:
-                        autoDiscoveredUrl = autoDiscoveryResult.RessourceUrl;
-                        break;
-                    default:
-                        autoDiscoveredUrl = null;
-                        break;
-                }
-            }
-            else
-            {
-                autoDiscoveredUrl = null;
-            }
-
-
-            var finalUrl = autoDiscoveredUrl?.ToString() ?? url;
-
-            var result = await ConnectionTester.TestConnection(new Uri(finalUrl), webDavClient);
-
-            if (result.ResourceType != ResourceType.None)
-            {
-                FixSynchronizationMode(options, result);
-                FixWebDavCollectionSync(options, result);
-            }
-
-            if (outlookFolderType == OlItemType.olContactItem)
-            {
-                // Google Addressbook doesn't have any properties. As long as there doesn't occur an exception, the test is successful.
-                MessageBox.Show(Strings.Get($"Connection test successful."), ConnectionTestCaption);
-            }
-            else
-            {
-                DisplayTestReport(
-                    result,
-                    options.SynchronizationMode,
-                    _enumDisplayNameProvider.Get(options.SynchronizationMode),
-                    outlookFolderType);
-            }
-
-            return finalUrl;
-        }
-
         private void FixSynchronizationMode(OptionsModel options, TestResult result)
         {
             const SynchronizationMode readOnlyDefaultMode = SynchronizationMode.ReplicateServerIntoOutlook;
@@ -869,84 +779,5 @@ namespace CalDavSynchronizer.Ui.Options
         }
 
 
-        private async Task<string> TestGoogleTaskConnection(OptionsModel options, StringBuilder errorMessageBuilder, OlItemType outlookFolderType, string url)
-        {
-            var service = await GoogleHttpClientFactory.LoginToGoogleTasksService(options.EmailAddress, options.GetProxyIfConfigured());
-
-            string connectionTestUrl;
-            if (string.IsNullOrEmpty(url))
-            {
-                TaskLists taskLists = await service.Tasklists.List().ExecuteAsync();
-
-                if (taskLists.Items.Any())
-                {
-                    var selectedTaskList = SelectTaskList(taskLists.Items.Select(i => new TaskListData(i.Id, i.Title, AccessPrivileges.All)).ToArray());
-                    if (selectedTaskList != null)
-                        connectionTestUrl = selectedTaskList.Id;
-                    else
-                        return url;
-                }
-                else
-                {
-                    connectionTestUrl = url;
-                }
-            }
-            else
-            {
-                connectionTestUrl = url;
-            }
-
-            try
-            {
-                await service.Tasklists.Get(connectionTestUrl).ExecuteAsync();
-            }
-            catch (Exception x)
-            {
-                s_logger.Error(null, x);
-                errorMessageBuilder.AppendFormat(Strings.Get($"The tasklist with id '{connectionTestUrl}' is invalid."));
-                MessageBox.Show(errorMessageBuilder.ToString(), Strings.Get($"The tasklist is invalid"), MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return url;
-            }
-
-            TestResult result = new TestResult(ResourceType.TaskList, CalendarProperties.None, AddressBookProperties.None, AccessPrivileges.None, false, null);
-
-            DisplayTestReport(
-                result,
-                options.SynchronizationMode,
-                _enumDisplayNameProvider.Get(options.SynchronizationMode),
-                outlookFolderType);
-            return connectionTestUrl;
-        }
-
-        private async Task<string> TestGoogleContactsConnection(OptionsModel options, OlItemType outlookFolderType, string url)
-        {
-            var service = await GoogleHttpClientFactory.LoginToContactsService(options.EmailAddress, options.GetProxyIfConfigured());
-
-            try
-            {
-                await Task.Run(() => service.GetGroups());
-            }
-            catch (Exception x)
-            {
-                s_logger.Error(null, x);
-                MessageBox.Show(x.Message, ConnectionTestCaption, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return url;
-            }
-
-            TestResult result = new TestResult(
-                ResourceType.AddressBook,
-                CalendarProperties.None,
-                AddressBookProperties.AddressBookAccessSupported,
-                AccessPrivileges.All,
-                false,
-                null);
-
-            DisplayTestReport(
-                result,
-                options.SynchronizationMode,
-                _enumDisplayNameProvider.Get(options.SynchronizationMode),
-                outlookFolderType);
-            return string.Empty;
-        }
     }
 }

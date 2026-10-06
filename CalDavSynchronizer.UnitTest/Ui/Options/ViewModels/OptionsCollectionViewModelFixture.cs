@@ -137,7 +137,6 @@ namespace CalDavSynchronizer.UnitTest.Ui.Options.ViewModels
                     data,
                     new GeneralOptions(),
                     this,
-                    false,
                     new OptionModelSessionData(new Dictionary<string, OutlookCategory>()),
                     new ServerSettingsDetector(outlookAccountPasswordProvider));
             }

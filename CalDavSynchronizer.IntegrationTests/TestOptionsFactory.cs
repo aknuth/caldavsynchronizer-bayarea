@@ -34,13 +34,6 @@ namespace CalDavSynchronizer.IntegrationTests
       return options;
     }
 
-    public Options CreateGoogleEvents()
-    {
-      var options = CreateDefaultOptions("IntegrationTest/Events/Google", AppointmantFolderName);
-      options.MappingConfiguration = CreateDefaultEventMappingConfiguration();
-      return options;
-    }
-
     public Options CreateSogoContacts()
     {
       var options = CreateDefaultOptions("IntegrationTests/Contacts/Sogo", ContactFolderName);
@@ -48,23 +41,9 @@ namespace CalDavSynchronizer.IntegrationTests
       return options;
     }
 
-    public Options CreateGoogleContacts()
-    {
-      var options = CreateDefaultOptions("IntegrationTests/Contacts/Google", ContactFolderName);
-      options.MappingConfiguration = CreateDefaultContactMappingConfiguration();
-      return options;
-    }
-
     public Options CreateSogoTasks()
     {
       var options = CreateDefaultOptions("IntegrationTest/Tasks/Sogo", TaskFolderName);
-      options.MappingConfiguration = CreateDefaultTaskMappingConfiguration();
-      return options;
-    }
-
-    public Options CreateGoogleTasks()
-    {
-      var options = CreateDefaultOptions("IntegrationTest/Tasks/Google", TaskFolderName);
       options.MappingConfiguration = CreateDefaultTaskMappingConfiguration();
       return options;
     }

@@ -38,7 +38,6 @@ namespace CalDavSynchronizer.Ui.Options.Models
     {
         private static readonly ILog s_logger = LogManager.GetLogger(MethodInfo.GetCurrentMethod().DeclaringType);
 
-        private readonly bool _isGoogle;
         private bool _isActive;
         private bool _isAutoConfigured;
         private string _name;
@@ -51,7 +50,6 @@ namespace CalDavSynchronizer.Ui.Options.Models
         private SecureString _password;
         private bool _useAccountPassword;
         private string _userName;
-        private bool _useGoogleNativeApi;
 
         private ConflictResolution _conflictResolution;
         private int _synchronizationIntervalInMinutes;
@@ -82,7 +80,7 @@ namespace CalDavSynchronizer.Ui.Options.Models
         private readonly MappingConfigurationModelFactory _mappingConfigurationModelFactory;
         private readonly IServerSettingsDetector _serverSettingsDetector;
 
-        public static OptionsModel DesignInstance => new OptionsModel(NullOptionTasks.Instance, NullOutlookAccountPasswordProvider.Instance, new Contracts.Options(), new GeneralOptions(), DesignProfileModelFactory.Instance, false, new OptionModelSessionData(new Dictionary<string, OutlookCategory>()), new NullServerSettingsDetector());
+        public static OptionsModel DesignInstance => new OptionsModel(NullOptionTasks.Instance, NullOutlookAccountPasswordProvider.Instance, new Contracts.Options(), new GeneralOptions(), DesignProfileModelFactory.Instance, new OptionModelSessionData(new Dictionary<string, OutlookCategory>()), new NullServerSettingsDetector());
 
         public OptionsModel(
             IOptionTasks optionTasks,
@@ -90,7 +88,6 @@ namespace CalDavSynchronizer.Ui.Options.Models
             Contracts.Options data,
             GeneralOptions generalOptions,
             IProfileModelFactory profileModelFactory,
-            bool isGoogle,
             OptionModelSessionData sessionData,
             IServerSettingsDetector serverSettingsDetector)
         {
@@ -106,7 +103,6 @@ namespace CalDavSynchronizer.Ui.Options.Models
 
             Id = data.Id;
 
-            _isGoogle = isGoogle;
             _serverSettingsDetector = serverSettingsDetector;
 
             InitializeData(data);
@@ -144,13 +140,7 @@ namespace CalDavSynchronizer.Ui.Options.Models
         public OutlookFolderDescriptor SelectedFolderOrNull
         {
             get { return _selectedFolderOrNull; }
-            private set
-            {
-                if (CheckedPropertyChange(ref _selectedFolderOrNull, value))
-                {
-                    OnPropertyChanged(nameof(UseGoogleNativeApiAvailable));
-                }
-            }
+            private set { CheckedPropertyChange(ref _selectedFolderOrNull, value); }
         }
 
         public string CalenderUrl
@@ -237,7 +227,6 @@ namespace CalDavSynchronizer.Ui.Options.Models
                     if (value)
                     {
                         UseSynchronizationTimeRange = false;
-                        UseGoogleNativeApi = false;
                     }
                 }
             }
@@ -315,43 +304,7 @@ namespace CalDavSynchronizer.Ui.Options.Models
             set { CheckedPropertyChange(ref _forceBasicAuthentication, value); }
         }
 
-        public bool UseGoogleNativeApi
-        {
-            get { return _useGoogleNativeApi; }
-            set
-            {
-                if (value)
-                    UseWebDavCollectionSync = false;
-
-                CheckedPropertyChange(ref _useGoogleNativeApi, value);
-            }
-        }
-
-        public bool UseGoogleNativeApiAvailable => _isGoogle && SelectedFolderOrNull?.DefaultItemType == OlItemType.olContactItem;
-
-
-        private ServerAdapterType ServerAdapterType
-        {
-            get
-            {
-                if (_isGoogle)
-                {
-                    switch (SelectedFolderOrNull?.DefaultItemType)
-                    {
-                        case OlItemType.olTaskItem:
-                            return ServerAdapterType.GoogleTaskApi;
-                        case OlItemType.olContactItem:
-                            return UseGoogleNativeApi ? ServerAdapterType.GoogleContactApi : ServerAdapterType.WebDavHttpClientBasedWithGoogleOAuth;
-                        default:
-                            return ServerAdapterType.WebDavHttpClientBasedWithGoogleOAuth;
-                    }
-                }
-                else
-                {
-                    return ServerAdapterType.WebDavHttpClientBased;
-                }
-            }
-        }
+        private ServerAdapterType ServerAdapterType => ServerAdapterType.WebDavHttpClientBased;
 
         public string FolderAccountName { get; private set; }
 
@@ -375,8 +328,6 @@ namespace CalDavSynchronizer.Ui.Options.Models
             _password = data.Password;
             _emailAddress = data.EmailAddress;
             _useAccountPassword = data.UseAccountPassword;
-
-            _useGoogleNativeApi = data.ServerAdapterType == ServerAdapterType.GoogleContactApi || data.ServerAdapterType == ServerAdapterType.GoogleTaskApi;
 
             _synchronizationMode = data.SynchronizationMode;
             _conflictResolution = data.ConflictResolution;
@@ -470,7 +421,7 @@ namespace CalDavSynchronizer.Ui.Options.Models
         {
             var data = CreateData();
             data.Id = Guid.NewGuid();
-            return new OptionsModel(_optionTasks, _outlookAccountPasswordProvider, data, _generalOptions, ModelFactory, _isGoogle, _sessionData, _serverSettingsDetector);
+            return new OptionsModel(_optionTasks, _outlookAccountPasswordProvider, data, _generalOptions, ModelFactory, _sessionData, _serverSettingsDetector);
         }
 
         public ProxyOptions CreateProxyOptions()
@@ -501,24 +452,8 @@ namespace CalDavSynchronizer.Ui.Options.Models
                 result = false;
             }
 
-            if (_isGoogle)
-            {
-                var serverAdapterType = ServerAdapterType;
-                if (serverAdapterType != ServerAdapterType.GoogleTaskApi && serverAdapterType != ServerAdapterType.GoogleContactApi)
-                    result &= OptionTasks.ValidateWebDavUrl(CalenderUrl, errorMessageBuilder, true);
-
-                result &= OptionTasks.ValidateEmailAddress(errorMessageBuilder, EmailAddress, false);
-            }
-            else
-            {
-                result &= OptionTasks.ValidateWebDavUrl(CalenderUrl, errorMessageBuilder, true);
-                result &= OptionTasks.ValidateEmailAddress(errorMessageBuilder, EmailAddress, true);
-            }
-            if (!string.IsNullOrEmpty(_profileTypeOrNull) && String.Equals(_profileTypeOrNull, "Swisscom", StringComparison.OrdinalIgnoreCase) && _selectedFolderOrNull?.DefaultItemType != OlItemType.olContactItem)
-            {
-                result = false;
-                errorMessageBuilder.AppendLine(Strings.Get($"- The Swisscom profile is currently just supported for contacts, please choose a Contacts folder"));
-            }
+            result &= OptionTasks.ValidateWebDavUrl(CalenderUrl, errorMessageBuilder, true);
+            result &= OptionTasks.ValidateEmailAddress(errorMessageBuilder, EmailAddress, true);
 
             if (IsChunkedSynchronizationEnabled && ChunkSize < 1)
             {

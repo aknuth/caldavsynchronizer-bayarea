@@ -24,6 +24,9 @@ namespace CalDavSynchronizer.Contracts
     {
         [XmlEnum("Default")] WebDavHttpClientBased,
 
+        // The Google adapters are removed. The values stay so that options files containing them can still be
+        // deserialized; such profiles fail with an error when synchronizing instead of breaking the add-in's startup.
+
         [XmlEnum("GoogleOAuth")] WebDavHttpClientBasedWithGoogleOAuth,
 
         GoogleTaskApi,
