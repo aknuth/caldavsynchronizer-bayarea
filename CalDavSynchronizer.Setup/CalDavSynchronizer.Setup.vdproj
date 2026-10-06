@@ -6670,6 +6670,78 @@
                     "Transitive" = "11:FALSE"
                     "Keys"
                     {
+                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_83CE438D037F4777BBBAB27464384ED6"
+                    {
+                    "Name" = "8:VSTO"
+                    "Condition" = "8:"
+                    "AlwaysCreate" = "11:FALSE"
+                    "DeleteAtUninstall" = "11:FALSE"
+                    "Transitive" = "11:FALSE"
+                    "Keys"
+                    {
+                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_687E4A3ABBF54DBA8675C859C9C3E1DA"
+                    {
+                    "Name" = "8:Security"
+                    "Condition" = "8:"
+                    "AlwaysCreate" = "11:FALSE"
+                    "DeleteAtUninstall" = "11:FALSE"
+                    "Transitive" = "11:FALSE"
+                    "Keys"
+                    {
+                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_A83310DF4FD0449AA41F60C6AE193A2F"
+                    {
+                    "Name" = "8:Inclusion"
+                    "Condition" = "8:"
+                    "AlwaysCreate" = "11:FALSE"
+                    "DeleteAtUninstall" = "11:FALSE"
+                    "Transitive" = "11:FALSE"
+                    "Keys"
+                    {
+                    "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_8234D1351E8442CDA0718DB2958EA345"
+                    {
+                    "Name" = "8:{73422112-DDD9-44D3-A8CB-21B5DE7B8A6E}"
+                    "Condition" = "8:"
+                    "AlwaysCreate" = "11:FALSE"
+                    "DeleteAtUninstall" = "11:FALSE"
+                    "Transitive" = "11:FALSE"
+                    "Keys"
+                    {
+                    }
+                    "Values"
+                    {
+                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_C73E8E3706B74F5F9F1A6CAB4B0655FA"
+                    {
+                    "Name" = "8:Url"
+                    "Condition" = "8:"
+                    "Transitive" = "11:FALSE"
+                    "ValueTypes" = "3:1"
+                    "Value" = "8:file:///[TARGETDIR]CalDavSynchronizer.vsto"
+                    }
+                    "{ADCFDA98-8FDD-45E4-90BC-E3D20B029870}:_20C40A951C3A4ACDB7CBF0F4BDACD395"
+                    {
+                    "Name" = "8:PublicKey"
+                    "Condition" = "8:"
+                    "Transitive" = "11:FALSE"
+                    "ValueTypes" = "3:1"
+                    "Value" = "8:<RSAKeyValue><Modulus>2yArLiNrATzwbaxdyEDoYPnZJ1yyUvE66+oKtvdadyHan88Kebw6jALUUzD1iR/dtrKvAsuxtGupfQL5BHEjbv9AgdFSB1IpL2B8yybOUB2UWT9FuYlHr241H9SCV55OSBhcWW6LtZhTIrfzKYoWk47FZulWnAR7qCREF5730t6Uw8PCck0nWYg/jXo7LdvRCIlw/yk91qB06KtfVA5iar/LrADWzyCbmPEfkkluSjULapDmIxAMV50pe89MCT878zZC6DJMoXyxhUbi3Gv8QdvHnRHMbECD9g7d46h0vlSd5ZkZ9XElqW9PxxUI4kRs/HMCaG1DSkBvVl47LnAucQ==</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>"
+                    }
+                    }
+                    }
+                    }
+                    "Values"
+                    {
+                    }
+                    }
+                    }
+                    "Values"
+                    {
+                    }
+                    }
+                    }
+                    "Values"
+                    {
+                    }
+                    }
                     "{60EA8692-D2D5-43EB-80DC-7906BF13D6EF}:_E74BA2EEB5484F79A2D26DFCB5C7297C"
                     {
                     "Name" = "8:Office"

@@ -1086,7 +1086,7 @@
     </ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>1DD03B86FE5C780F60AADFD80FC8963626189ECF</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>A92B073078ABF90F2CC2083CEC8138F275409C0E</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestTimestampUrl>http://timestamp.comodoca.com/rfc3161</ManifestTimestampUrl>

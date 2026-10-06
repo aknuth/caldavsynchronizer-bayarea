@@ -105,6 +105,9 @@ cd C:\src\ocs
 git pull
 ```
 
+Seit das Zertifikat fest in der `.csproj` steht, ist kein `git stash` mehr
+noetig.
+
 Lokal unter `C:\` bauen, nicht direkt vom Share (VSTO-Vertrauensstellung).
 
 ## Bauen und starten
@@ -115,9 +118,8 @@ Lokal unter `C:\` bauen, nicht direkt vom Share (VSTO-Vertrauensstellung).
    `CalDavSynchronizer.Setup.vdproj` werde nicht unterstuetzt, mit *OK*
    bestaetigen. Das ist nur das MSI-Installer-Projekt (braucht die Erweiterung
    *Microsoft Visual Studio Installer Projects*), fuer F5 nicht noetig.
-3. Projekt *CalDavSynchronizer* -> Eigenschaften -> *Signierung* ->
-   *Testzertifikat erstellen* (das Zertifikat des Originalautors fehlt).
-   Diese Aenderung nicht committen.
+3. Das Zertifikat `CN=Bay Area Affiliates` muss in *Eigene Zertifikate* des
+   bauenden Benutzers liegen (siehe Installer). Kein Testzertifikat mehr.
 4. Outlook schliessen, *CalDavSynchronizer* als Startprojekt, F5.
 
 ## Automatische Einrichtung
@@ -204,8 +206,15 @@ VS-Erweiterung *Microsoft Visual Studio Installer Projects 2022*).
   ein. Das installierte Add-in heisst in der Registry `CalDavSynchronizer.1`
   (der Debug-Build `CalDavSynchronizer`). Gilt fuer den Benutzer, der
   installiert.
-- Offen: eigenes Zertifikat und VSTO-Vertrauensliste (Inclusion List), damit
-  Outlook beim ersten Start nicht nachfragt.
+- Zertifikat: selbst erstellt, `CN=Bay Area Affiliates`, 5 Jahre,
+  Thumbprint `A92B073078ABF90F2CC2083CEC8138F275409C0E`, in der `.csproj` fest
+  eingetragen. Privater Schluessel nur in der Sicherung
+  `BayAreaAffiliates-CodeSigning.pfx` (nicht im Repo). Zum Bauen auf einem
+  anderen Rechner die `.pfx` in *Eigene Zertifikate* importieren.
+- VSTO-Vertrauensliste: der Installer traegt unter
+  `HKCU\Software\Microsoft\VSTO\Security\Inclusion\{GUID}` die URL des
+  Manifests und den oeffentlichen Schluessel ein, damit Outlook beim ersten
+  Start nicht nachfragt (fuer den installierenden Benutzer).
 
 ## Naechste Schritte
 
