@@ -216,6 +216,14 @@ VS-Erweiterung *Microsoft Visual Studio Installer Projects 2022*).
   Manifests und den oeffentlichen Schluessel ein, damit Outlook beim ersten
   Start nicht nachfragt (fuer den installierenden Benutzer).
 
+Test 2026-10-06: Setup baut (`CalDavSynchronizer.Setup\Debug\setup.exe` und
+`.msi`), vorher *Projektmappe bereinigen* (entfernt die F5-Registrierung).
+Installation ok: keine Rueckfrage beim ersten Start (Vertrauensliste wirkt),
+Menueband da, Profile erhalten, Add-in nach mehreren Neustarts nicht
+abgeschaltet. Ein gekauftes Zertifikat waere nur noetig gegen die Windows-
+Warnung beim Ausfuehren von `setup.exe` und fuer weitere Windows-Benutzer am
+selben PC (die Vertrauensliste gilt nur fuer den installierenden).
+
 ## Naechste Schritte
 
 1. **Abspecken auf sabre/dav.** Automatische Einrichtung (siehe oben) ist
