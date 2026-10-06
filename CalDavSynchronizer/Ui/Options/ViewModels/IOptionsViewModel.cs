@@ -36,6 +36,5 @@ namespace CalDavSynchronizer.Ui.Options.ViewModels
         bool Validate(StringBuilder errorMessageBuilder);
 
         OlItemType? OutlookFolderType { get; }
-        bool IsMultipleOptionsTemplateViewModel { get; }
     }
 }

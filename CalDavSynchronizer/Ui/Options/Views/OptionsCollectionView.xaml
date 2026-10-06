@@ -8,8 +8,6 @@
              xmlns:viewModels="clr-namespace:CalDavSynchronizer.Ui.Options.ViewModels"
              xmlns:views="clr-namespace:CalDavSynchronizer.Ui.Options.Views"
              xmlns:system="clr-namespace:System;assembly=mscorlib"
-             xmlns:bulkOptionsViewModels="clr-namespace:CalDavSynchronizer.Ui.Options.BulkOptions.ViewModels"
-             xmlns:bulkOptionsViews="clr-namespace:CalDavSynchronizer.Ui.Options.BulkOptions.Views"
              xmlns:g="clr-namespace:CalDavSynchronizer.Globalization"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="600"
@@ -73,7 +71,6 @@
                     <Image.Source>
                         <MultiBinding Converter="{StaticResource ToProfileImageConverter}">
                             <Binding Path="OutlookFolderType" />
-                            <Binding Path="IsMultipleOptionsTemplateViewModel" />
                         </MultiBinding>
                     </Image.Source>
                 </Image>
@@ -130,9 +127,6 @@
             <views:TimeRangeView />
         </DataTemplate>
 
-        <DataTemplate DataType="{x:Type bulkOptionsViewModels:ServerSettingsTemplateViewModel}">
-            <bulkOptionsViews:ServerSettingsTemplateView />
-        </DataTemplate>
 
 
 
@@ -152,18 +146,6 @@
             </ContentControl>
         </DataTemplate>
 
-        <DataTemplate DataType="{x:Type bulkOptionsViewModels:MultipleOptionsTemplateViewModel}">
-            <StackPanel>
-                <DockPanel DockPanel.Dock="Top">
-                    <TextBlock Style="{StaticResource {x:Type TextBlock}}" DockPanel.Dock="Left" Text="{g:Localize Name:}" />
-                    <TextBox Text="{Binding Name}" />
-                </DockPanel>
-                <ContentControl Content="{Binding ServerSettingsViewModel}" />
-                <Button HorizontalAlignment="Left" Command="{Binding GetAccountSettingsCommand}"><g:Localize>Get IMAP/POP3 account settings</g:Localize></Button>
-                <Button HorizontalAlignment="Left" Command="{Binding DiscoverResourcesCommand}"><g:Localize>Discover resources and assign to Outlook folders</g:Localize></Button>
-
-            </StackPanel>
-        </DataTemplate>
 
       </ResourceDictionary>
     </UserControl.Resources>
@@ -189,9 +171,6 @@
         <ToolBar DockPanel.Dock="Top">
             <Button Command="{Binding AddCommand}" ToolTip="{g:Localize Add new profile}">
                 <Image Stretch="None" Source="pack://application:,,,/CalDavSynchronizer;component/Resources/Add.png" />
-            </Button>
-            <Button Command="{Binding AddMultipleCommand}" ToolTip="{g:Localize Add multiple profiles}">
-                <Image Stretch="None" Source="pack://application:,,,/CalDavSynchronizer;component/Resources/AddMultiple.png" />
             </Button>
             <Button Command="{Binding DeleteSelectedCommand}" ToolTip="{g:Localize Delete selected profile}">
                 <Image Stretch="None" Source="pack://application:,,,/CalDavSynchronizer;component/Resources/Delete.png" />

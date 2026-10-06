@@ -78,7 +78,6 @@ namespace CalDavSynchronizer.Ui.Options.ViewModels
             });
 
             AddCommand = new DelegateCommand(_ => Add());
-            AddMultipleCommand = new DelegateCommand(_ => AddMultiple());
             CloseCommand = new DelegateCommand(shouldSaveNewOptions => Close((bool) shouldSaveNewOptions));
             DeleteSelectedCommand = new DelegateCommandHandlingRequerySuggested(_ => DeleteSelected(), _ => CanDeleteSelected);
             ClearCacheOfSelectedCommand = new DelegateCommandHandlingRequerySuggested(_ => ClearCacheOfSelected(), _ => CanClearCacheOfSelected);
@@ -294,25 +293,15 @@ namespace CalDavSynchronizer.Ui.Options.ViewModels
             }
         }
 
-        private void AddMultiple()
-        {
-            var type = QueryProfileType();
-            if (type != null)
-            {
-                var profileModelFactoryFactory = _profileModelFactoriesByType[type];
-                var viewModel = profileModelFactoryFactory.CreateTemplateViewModel();
-                _options.Add(viewModel);
-                ShowProfile(viewModel.Model.Id);
-            }
-        }
-
         private IProfileType QueryProfileType()
         {
+            // With a single profile type there is nothing to choose.
+            if (_profileTypeRegistry.AllTypes.Count == 1)
+                return _profileTypeRegistry.AllTypes[0];
             return _uiService.QueryProfileType(_profileTypeRegistry.AllTypes);
         }
 
         public ICommand AddCommand { get; }
-        public ICommand AddMultipleCommand { get; }
         public ICommand CloseCommand { get; }
         public ICommand DeleteSelectedCommand { get; }
         public ICommand ClearCacheOfSelectedCommand { get; }
@@ -353,13 +342,13 @@ namespace CalDavSynchronizer.Ui.Options.ViewModels
 
         public Contracts.Options[] GetOptionsCollection()
         {
-            return _options.Where(o => !o.IsMultipleOptionsTemplateViewModel).Select(o => o.Model.CreateData()).ToArray();
+            return _options.Select(o => o.Model.CreateData()).ToArray();
         }
 
         public OneTimeChangeCategoryTask[] GetOneTimeTasks()
         {
             var oneTimeTasks = new List<OneTimeChangeCategoryTask>();
-            foreach (var options in _options.Where(o => !o.IsMultipleOptionsTemplateViewModel))
+            foreach (var options in _options)
                 options.Model.AddOneTimeTasks(oneTimeTasks.Add);
             return oneTimeTasks.ToArray();
         }

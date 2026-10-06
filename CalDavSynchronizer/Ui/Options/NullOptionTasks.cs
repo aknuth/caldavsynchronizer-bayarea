@@ -62,11 +62,6 @@ namespace CalDavSynchronizer.Ui.Options
             throw new NotImplementedException();
         }
 
-        public void ValidateBulkProfile(OptionsModel options, AccessPrivileges privileges, CalendarOwnerProperties ownerPropertiesOrNull)
-        {
-            throw new NotImplementedException();
-        }
-
         public OutlookFolderDescriptor GetDefaultCalendarFolderOrNull()
         {
             throw new NotImplementedException();

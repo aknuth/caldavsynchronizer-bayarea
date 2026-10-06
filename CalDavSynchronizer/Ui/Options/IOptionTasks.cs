@@ -31,7 +31,6 @@ namespace CalDavSynchronizer.Ui.Options
         void SaveOptions(Contracts.Options[] options, string fileName);
         Contracts.Options[] LoadOptions(string fileName);
         Task<string> TestWebDavConnection(OptionsModel options);
-        void ValidateBulkProfile(OptionsModel options, AccessPrivileges privileges, CalendarOwnerProperties ownerPropertiesOrNull);
 
         OutlookFolderDescriptor GetDefaultCalendarFolderOrNull();
     }

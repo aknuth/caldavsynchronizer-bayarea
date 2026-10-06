@@ -20,7 +20,6 @@ using System.Collections.Generic;
 using CalDavSynchronizer.Contracts;
 using CalDavSynchronizer.Globalization;
 using CalDavSynchronizer.Ui.Options;
-using CalDavSynchronizer.Ui.Options.BulkOptions.ViewModels;
 using CalDavSynchronizer.Ui.Options.Models;
 using CalDavSynchronizer.Ui.Options.ViewModels;
 
@@ -96,32 +95,7 @@ namespace CalDavSynchronizer.ProfileTypes
             return new ServerSettingsViewModel(model, OptionTasks, ViewOptions);
         }
 
-        public IOptionsViewModel CreateTemplateViewModel()
-        {
-            var data = ProfileType.CreateOptions();
-            data.Name = ProfileType.Name;
-            var prototypeModel = CreateModel(data);
-            var optionsViewModel = CreateTemplateViewModel(prototypeModel);
-
-            return optionsViewModel;
-        }
-
         public virtual ProfileModelOptions ModelOptions { get; } = new ProfileModelOptions(true, true, true, true, Strings.Get($"DAV URL"), true, true, true, true);
 
-        protected virtual IOptionsViewModel CreateTemplateViewModel(OptionsModel prototypeModel)
-        {
-            var optionsViewModel = new MultipleOptionsTemplateViewModel(
-                OptionsViewModelParent,
-                CreateServerSettingsTemplateViewModel(prototypeModel),
-                OptionTasks,
-                prototypeModel,
-                ViewOptions);
-            return optionsViewModel;
-        }
-
-        protected virtual IServerSettingsTemplateViewModel CreateServerSettingsTemplateViewModel(OptionsModel prototypeModel)
-        {
-            return new ServerSettingsTemplateViewModel(OutlookAccountPasswordProvider, prototypeModel, ModelOptions);
-        }
     }
 }

@@ -433,12 +433,6 @@
       <DependentUpon>ProgressWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Ui\Options\AutoDiscoverResultStatus.cs" />
-    <Compile Include="Ui\Options\BulkOptions\ViewModels\IServerSettingsTemplateViewModel.cs" />
-    <Compile Include="Ui\Options\BulkOptions\ViewModels\ServerResources.cs" />
-    <Compile Include="Ui\Options\BulkOptions\ViewModels\ServerSettingsTemplateViewModel.cs" />
-    <Compile Include="Ui\Options\BulkOptions\Views\ServerSettingsTemplateView.xaml.cs">
-      <DependentUpon>ServerSettingsTemplateView.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Ui\Options\IOptionTasks.cs" />
     <Compile Include="Ui\Options\ISynchronizationProfilesViewModel.cs" />
     <Compile Include="Ui\Options\Models\ContactMappingConfigurationModel.cs" />
@@ -451,7 +445,6 @@
     <Compile Include="Ui\Options\ResourceSelection\ViewModels\AddressBookDataViewModel.cs" />
     <Compile Include="Ui\Options\ResourceSelection\ViewModels\CalendarDataViewModel.cs" />
     <Compile Include="Ui\Options\ResourceSelection\ViewModels\TaskListDataViewModel.cs" />
-    <Compile Include="Ui\Options\BulkOptions\ViewModels\MultipleOptionsTemplateViewModel.cs" />
     <Compile Include="Ui\Options\ViewModels\ISubOptionsViewModel.cs" />
     <Compile Include="Ui\Options\ViewModels\ITreeNodeViewModel.cs" />
     <Compile Include="Ui\Options\ViewModels\Mapping\CustomPropertyMappingViewModel.cs" />
@@ -771,21 +764,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="LICENSE.txt" />
-    <Resource Include="Resources\ProfileLogos\logo_postassl.png" />
-    <Resource Include="Resources\ProfileLogos\logo_aruba.png" />
-    <Resource Include="Resources\ProfileLogos\logo_untermStrich.png" />
-    <Resource Include="Resources\ProfileLogos\logo_ox_with_claim.png" />
-    <Resource Include="Resources\ProfileLogos\logo_fuago.png" />
-    <Resource Include="Resources\ProfileLogos\logo_fastmail.png" />
-    <Resource Include="Resources\ProfileLogos\logo_egroupware.png" />
-    <Resource Include="Resources\ProfileLogos\logo_ox.png" />
-    <Resource Include="Resources\ProfileLogos\logo_kolab.png" />
-    <Resource Include="Resources\ProfileLogos\logo_swisscom.png" />
-    <Resource Include="Resources\ProfileLogos\logo_iCloud.png" />
-    <Resource Include="Resources\ProfileLogos\logo_mail.de.png" />
-    <Resource Include="Resources\ProfileLogos\logo_smartermail.png" />
-    <Resource Include="Resources\ProfileLogos\logo_webde.png" />
-    <Resource Include="Resources\ProfileLogos\logo_mailbox.org.png" />
     <None Include="Resources\SyncReport.png" />
     <Resource Include="Resources\warning.ico" />
     <None Include="Resources\SyncError.png" />
@@ -794,11 +772,6 @@
     <Resource Include="Resources\ok.ico" />
     <Resource Include="Resources\ApplicationIcon.ico" />
     <Resource Include="Resources\error.ico" />
-    <Resource Include="Resources\ProfileLogos\logo_fruux.png" />
-    <Resource Include="Resources\ProfileLogos\logo_posteo.png" />
-    <Resource Include="Resources\ProfileLogos\logo_google.png" />
-    <Resource Include="Resources\ProfileLogos\logo_yandex.png" />
-    <Resource Include="Resources\ProfileLogos\logo_gmx.png" />
     <Resource Include="Resources\Appointment.png" />
     <Resource Include="Resources\Contact.png" />
     <Resource Include="Resources\Task.png" />
@@ -807,11 +780,6 @@
     <Resource Include="Resources\Add.png" />
     <Resource Include="Resources\Copy.png" />
     <Resource Include="Resources\Delete.png" />
-    <Resource Include="Resources\ProfileLogos\logo_sarenet.png" />
-    <Resource Include="Resources\AddMultiple.png" />
-    <Resource Include="Resources\ProfileLogos\logo_landmarks.png" />
-    <Resource Include="Resources\ProfileLogos\logo_sogo.png" />
-    <Resource Include="Resources\ProfileLogos\logo_cozy.png" />
     <Resource Include="Resources\Folder.png" />
     <Resource Include="Resources\CollapseAll.png" />
     <Resource Include="Resources\Export.png" />
@@ -820,8 +788,6 @@
     <None Include="Resources\ApplicationLogoLarge.png" />
     <Content Include="Resources\LogoBanner.bmp" />
     <Resource Include="Resources\ExpandAll.png" />
-    <Resource Include="Resources\ProfileLogos\logo_nextcloud.png" />
-    <Resource Include="Resources\ProfileLogos\logo_easyproject.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CalDavSynchronizer.Conversions\CalDavSynchronizer.Conversions.csproj">
@@ -880,10 +846,6 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Ui\Views\ProgressWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Ui\Options\BulkOptions\Views\ServerSettingsTemplateView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

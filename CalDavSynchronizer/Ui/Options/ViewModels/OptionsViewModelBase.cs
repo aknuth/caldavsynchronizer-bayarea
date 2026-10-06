@@ -48,7 +48,6 @@ namespace CalDavSynchronizer.Ui.Options.ViewModels
             RegisterPropertyChangePropagation(_model, nameof(_model.IsActive), nameof(IsActive));
         }
 
-        public bool IsMultipleOptionsTemplateViewModel { get; } = false;
         public abstract OlItemType? OutlookFolderType { get; }
 
         public IEnumerable<IOptionsSection> Sections => _sections ?? (_sections = CreateSections());

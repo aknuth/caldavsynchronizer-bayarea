@@ -28,7 +28,7 @@ namespace CalDavSynchronizer.ProfileTypes
     {
         public static IProfileType Instance => new DesignProfileType();
         public override string Name { get; } = "Design Profile";
-        public override string ImageUrl { get; } = "pack://application:,,,/CalDavSynchronizer;component/Resources/ProfileLogos/logo_sogo.png";
+        public override string ImageUrl { get; } = "";
 
         public override IProfileModelFactory CreateModelFactory(IOptionsViewModelParent optionsViewModelParent, IOutlookAccountPasswordProvider outlookAccountPasswordProvider, IReadOnlyList<string> availableCategories, IOptionTasks optionTasks, GeneralOptions generalOptions, IViewOptions viewOptions, OptionModelSessionData sessionData)
         {

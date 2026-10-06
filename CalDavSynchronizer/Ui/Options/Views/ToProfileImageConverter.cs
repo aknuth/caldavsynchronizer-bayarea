@@ -23,7 +23,6 @@ using System.Windows.Media.Imaging;
 using CalDavSynchronizer.Utilities;
 using Microsoft.Office.Interop.Outlook;
 using System.Linq;
-using CalDavSynchronizer.Ui.Options.BulkOptions.ViewModels;
 using CalDavSynchronizer.Ui.Options.ViewModels;
 
 namespace CalDavSynchronizer.Ui.Options.Views
@@ -32,11 +31,6 @@ namespace CalDavSynchronizer.Ui.Options.Views
     {
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
-            var isMultipleOptionsTemplateViewModel = (bool?) values[1];
-
-            if (isMultipleOptionsTemplateViewModel.GetValueOrDefault(false))
-                return BitmapFrame.Create(new Uri("pack://application:,,,/CalDavSynchronizer;component/Resources/AddMultiple.png"));
-
             var itemType = (OlItemType?) values[0];
             switch (itemType)
             {

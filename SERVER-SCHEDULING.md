@@ -249,6 +249,11 @@ selben PC (die Vertrauensliste gilt nur fuer den installierenden).
 - Setup: Google/OAuth-Abhaengigkeiten und der Swisscom-Sprachdatei-Eintrag
   entfernt.
 
+**Schritt 2:** Allgemeine Mehrfacheinrichtung (*Add multiple profiles*,
+`Ui/Options/BulkOptions`) entfernt - ersetzt durch *Set up calendars*. Alle
+Anbieter-Logos entfernt. Der Dialog zur Auswahl des Profiltyps entfaellt bei
+nur einem Typ; *Add new profile* legt direkt ein generisches Profil an.
+
 ## Naechste Schritte
 
 1. **Abspecken auf sabre/dav.** Automatische Einrichtung (siehe oben) ist

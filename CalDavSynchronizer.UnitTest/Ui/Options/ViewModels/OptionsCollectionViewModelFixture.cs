@@ -152,11 +152,6 @@ namespace CalDavSynchronizer.UnitTest.Ui.Options.ViewModels
                     MockRepository.GenerateStub<IViewOptions>());
             }
 
-            public IOptionsViewModel CreateTemplateViewModel()
-            {
-                throw new NotImplementedException();
-            }
-
             public ProfileModelOptions ModelOptions { get; } = new ProfileModelOptions(true, true, true, true, "DAV Url", true, true, true, true);
 
             public string ImageUrl { get; } = string.Empty;
