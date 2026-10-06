@@ -38,6 +38,12 @@ namespace CalDavSynchronizer
             _loadExceptionAsString = loadExceptionAsString;
         }
 
+        public Task SetUpAccountsAsync()
+        {
+            ShowErrorMessage();
+            return Task.FromResult(0);
+        }
+
         public Task ShowOptionsAsync(Guid? initialVisibleProfile = null)
         {
             ShowErrorMessage();

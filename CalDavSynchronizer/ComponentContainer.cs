@@ -275,7 +275,6 @@ namespace CalDavSynchronizer
             var generalOptions = _generalOptionsDataAccess.LoadOptions();
 
             await _scheduler.SetOptions(options, generalOptions);
-            await RunAccountAutoSetupNoThrow();
             if (generalOptions.TriggerSyncAfterSendReceive)
             {
                 s_logger.Info("Triggering sync after startup");
@@ -284,22 +283,21 @@ namespace CalDavSynchronizer
             }
         }
 
-        private async Task RunAccountAutoSetupNoThrow()
+        public async Task SetUpAccountsAsync()
         {
-            try
+            var report = new List<string>();
+            var generalOptions = _generalOptionsDataAccess.LoadOptions();
+            var newOptions = await _accountAutoSetup.GetUpdatedOptionsOrNull(_optionsDataAccess.Load(), generalOptions, report);
+            if (newOptions != null)
             {
-                var generalOptions = _generalOptionsDataAccess.LoadOptions();
-                var newOptions = await _accountAutoSetup.GetUpdatedOptionsOrNull(_optionsDataAccess.Load(), generalOptions);
-                if (newOptions != null)
-                {
-                    s_logger.Info("AutoSetup changed the profiles, applying them.");
-                    await ApplyNewOptions(_optionsDataAccess.Load(), newOptions, generalOptions, Enumerable.Empty<OneTimeChangeCategoryTask>());
-                }
+                s_logger.Info("AutoSetup changed the profiles, applying them.");
+                await ApplyNewOptions(_optionsDataAccess.Load(), newOptions, generalOptions, Enumerable.Empty<OneTimeChangeCategoryTask>());
+                SynchronizeNowAsync();
             }
-            catch (Exception x)
-            {
-                s_logger.Error("AutoSetup failed.", x);
-            }
+
+            if (report.Count == 0)
+                report.Add(Strings.Get($"No IMAP account found."));
+            MessageBox.Show(string.Join(Environment.NewLine, report), Strings.Get($"Set up calendars"));
         }
 
         async void SynchronizeInitial()

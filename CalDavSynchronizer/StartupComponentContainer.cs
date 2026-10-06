@@ -34,6 +34,12 @@ namespace CalDavSynchronizer
         {
         }
 
+        public Task SetUpAccountsAsync()
+        {
+            ShowStartupMessage();
+            return Task.FromResult(0);
+        }
+
         public Task ShowOptionsAsync(Guid? initialVisibleProfile = null)
         {
             ShowStartupMessage();

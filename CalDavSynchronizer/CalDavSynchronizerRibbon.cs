@@ -43,6 +43,24 @@ namespace CalDavSynchronizer
             ReportsButton.Image = Resources.SyncError;
         }
 
+        private async void SetUpAccountsButton_Click(object sender, RibbonControlEventArgs e)
+        {
+            SetUpAccountsButton.Enabled = false;
+            try
+            {
+                ComponentContainer.EnsureSynchronizationContext();
+                await ThisAddIn.ComponentContainer.SetUpAccountsAsync();
+            }
+            catch (Exception x)
+            {
+                ExceptionHandler.Instance.DisplayException(x, s_logger);
+            }
+            finally
+            {
+                SetUpAccountsButton.Enabled = true;
+            }
+        }
+
         private void SynchronizeNowButton_Click(object sender, RibbonControlEventArgs e)
         {
             try

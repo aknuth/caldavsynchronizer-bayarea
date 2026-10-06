@@ -122,8 +122,16 @@ Lokal unter `C:\` bauen, nicht direkt vom Share (VSTO-Vertrauensstellung).
 
 ## Automatische Einrichtung
 
-`CalDavSynchronizer/AutoSetup/AccountAutoSetup.cs`, laeuft bei jedem
-Outlook-Start (`ComponentContainer.RunAccountAutoSetupNoThrow`).
+`CalDavSynchronizer/AutoSetup/AccountAutoSetup.cs`, laeuft auf Knopfdruck:
+Menueband *CalDav Synchronizer* -> **Set up calendars**
+(`ComponentContainer.SetUpAccountsAsync`). Danach eine Zusammenfassung
+(gefunden / hinzugefuegt / reaktiviert / deaktiviert) und ein Abgleich.
+
+Zuerst lief sie bei jedem Start. Am 2026-10-06 hat Outlook das Add-in
+abgeschaltet (*caused Outlook to start slowly*, 1,3 s). Die Suche lief zwar
+erst nach dem Laden in einem Timer, vermutlich lag es am Debug-Build; ein
+Knopf vermeidet aber unerwartete Netzzugriffe beim Start. Wieder einschalten:
+*Slow and Disabled Add-ins* -> *Options* -> *Always enable this add-in*.
 
 - Fuer jedes IMAP-Konto in Outlook: Server `https://dav.{domain}/`,
   Benutzer = Mailadresse, Passwort = gespeichertes IMAP-Passwort.
@@ -157,4 +165,8 @@ davon ab, ob sabre/dav fuer die Freigabe den Besitzer als `DAV:owner` meldet.
 1. **Abspecken auf sabre/dav.** Automatische Einrichtung (siehe oben) ist
    gebaut. Danach: alle anderen Anbieterprofile, OAuth (Google, Swisscom),
    Aufgaben und die alten Einrichtungsdialoge entfernen.
-2. **Richtiger Installer** mit gueltigem Code-Signing-Zertifikat.
+2. **Richtiger Installer** mit gueltigem Code-Signing-Zertifikat. Er soll das
+   Add-in in Outlooks Liste *DoNotDisableAddinList* eintragen
+   (`HKCU\Software\Microsoft\Office\16.0\Outlook\Resiliency\DoNotDisableAddinList`,
+   Wert `CalDavSynchronizer` = DWORD 1), damit Outlook es nicht wegen
+   langsamen Starts abschaltet.

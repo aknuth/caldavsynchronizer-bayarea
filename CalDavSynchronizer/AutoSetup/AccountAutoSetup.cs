@@ -60,31 +60,34 @@ namespace CalDavSynchronizer.AutoSetup
             _passwordProvider = passwordProvider ?? throw new ArgumentNullException(nameof(passwordProvider));
         }
 
+        /// <param name="report">Receives one line per account and per change, to be shown to the user.</param>
         /// <returns>The new profile list, or null if nothing changed.</returns>
-        public async Task<Options[]> GetUpdatedOptionsOrNull(Options[] currentOptions, GeneralOptions generalOptions)
+        public async Task<Options[]> GetUpdatedOptionsOrNull(Options[] currentOptions, GeneralOptions generalOptions, List<string> report)
         {
             var options = currentOptions.ToList();
             var changed = false;
 
             foreach (var account in _session.Accounts.ToSafeEnumerable<Account>())
             {
+                if (account.AccountType != OlAccountType.olImap)
+                    continue;
+
+                var accountName = account.DisplayName;
                 try
                 {
-                    if (account.AccountType != OlAccountType.olImap)
-                        continue;
-
-                    changed |= await SetUpAccount(account, options, generalOptions);
+                    changed |= await SetUpAccount(account, options, generalOptions, report);
                 }
                 catch (Exception x)
                 {
                     s_logger.Error("AutoSetup: error setting up account, profiles of this account stay as they are.", x);
+                    report.Add($"{accountName}: {x.Message}");
                 }
             }
 
             return changed ? options.ToArray() : null;
         }
 
-        private async Task<bool> SetUpAccount(Account account, List<Options> options, GeneralOptions generalOptions)
+        private async Task<bool> SetUpAccount(Account account, List<Options> options, GeneralOptions generalOptions, List<string> report)
         {
             var accountName = account.DisplayName;
             var emailAddress = account.SmtpAddress;
@@ -92,6 +95,7 @@ namespace CalDavSynchronizer.AutoSetup
             if (atIndex < 0)
             {
                 s_logger.Warn($"AutoSetup: account '{accountName}' has no email address, skipped.");
+                report.Add($"{accountName}: no email address, skipped.");
                 return false;
             }
 
@@ -99,6 +103,7 @@ namespace CalDavSynchronizer.AutoSetup
             if (password.Length == 0)
             {
                 s_logger.Warn($"AutoSetup: no IMAP password stored for account '{accountName}', skipped.");
+                report.Add($"{emailAddress}: no IMAP password stored in Outlook, skipped.");
                 return false;
             }
 
@@ -118,7 +123,9 @@ namespace CalDavSynchronizer.AutoSetup
 
             var calendars = (await new CalDavDataAccess(serverUrl, webDavClient).GetUserResourcesIncludingCalendarProxies(true)).CalendarResources;
             var addressBooks = await new CardDavDataAccess(serverUrl, webDavClient, string.Empty, contentType => true).GetUserAddressBooksNoThrow(true);
-            s_logger.Info($"AutoSetup: '{emailAddress}' at '{serverUrl}': {calendars.Count} calendar(s), {addressBooks.Count} address book(s).");
+            var summary = $"{emailAddress} ({serverUrl}): {calendars.Count} calendar(s), {addressBooks.Count} address book(s) found.";
+            s_logger.Info($"AutoSetup: {summary}");
+            report.Add(summary);
 
             var changed = false;
             using (var store = GenericComObjectWrapper.Create(account.DeliveryStore))
@@ -134,7 +141,7 @@ namespace CalDavSynchronizer.AutoSetup
                             c.Name,
                             c.OwnerProperties != null && c.OwnerProperties.IsSharedCalendar ? c.OwnerProperties.CalendarOwnerEmail : null,
                             c.Privileges));
-                        changed |= Reconcile(collections, calendarFolder.Inner, OlDefaultFolders.olFolderCalendar, accountName, emailAddress, options, CreateEventMappingConfiguration);
+                        changed |= Reconcile(collections, calendarFolder.Inner, OlDefaultFolders.olFolderCalendar, accountName, emailAddress, options, CreateEventMappingConfiguration, report);
                     }
                 }
 
@@ -143,7 +150,7 @@ namespace CalDavSynchronizer.AutoSetup
                     using (var contactsFolder = GenericComObjectWrapper.Create((Folder) store.Inner.GetDefaultFolder(OlDefaultFolders.olFolderContacts)))
                     {
                         var collections = addressBooks.Select(a => new Collection(a.Uri, a.Name, null, a.Privileges));
-                        changed |= Reconcile(collections, contactsFolder.Inner, OlDefaultFolders.olFolderContacts, accountName, emailAddress, options, _profileType.CreateContactMappingConfiguration);
+                        changed |= Reconcile(collections, contactsFolder.Inner, OlDefaultFolders.olFolderContacts, accountName, emailAddress, options, _profileType.CreateContactMappingConfiguration, report);
                     }
                 }
             }
@@ -168,7 +175,8 @@ namespace CalDavSynchronizer.AutoSetup
             string accountName,
             string emailAddress,
             List<Options> options,
-            Func<MappingConfigurationBase> createMappingConfiguration)
+            Func<MappingConfigurationBase> createMappingConfiguration,
+            List<string> report)
         {
             var changed = false;
             var mappingType = createMappingConfiguration().GetType();
@@ -185,6 +193,7 @@ namespace CalDavSynchronizer.AutoSetup
                     if (existing.IsAutoConfigured && (existing.Inactive || existing.SynchronizationMode != synchronizationMode))
                     {
                         s_logger.Info($"AutoSetup: updating profile '{existing.Name}'.");
+                        report.Add($"  {(existing.Inactive ? "reactivated" : "updated")}: {existing.Name}");
                         existing.Inactive = false;
                         existing.SynchronizationMode = synchronizationMode;
                         existing.EnableChangeTriggeredSynchronization = collection.IsWritable;
@@ -228,6 +237,7 @@ namespace CalDavSynchronizer.AutoSetup
                 newOptions.MappingConfiguration = createMappingConfiguration();
 
                 s_logger.Info($"AutoSetup: adding profile '{newOptions.Name}' for '{newOptions.CalenderUrl}'.");
+                report.Add($"  added: {newOptions.Name}{(collection.IsWritable ? "" : " (read only)")}");
                 options.Add(newOptions);
                 changed = true;
             }
@@ -242,6 +252,7 @@ namespace CalDavSynchronizer.AutoSetup
                 // Keep the folder, the user may have stored something in it.
                 s_logger.Info($"AutoSetup: '{gone.CalenderUrl}' no longer on the server, deactivating profile '{gone.Name}'.");
                 gone.Inactive = true;
+                report.Add($"  deactivated (no longer on the server): {gone.Name}");
                 changed = true;
             }
 

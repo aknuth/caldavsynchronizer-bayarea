@@ -28,5 +28,6 @@ namespace CalDavSynchronizer
         event EventHandler<SchedulerStatusEventArgs> StatusChanged;
 
         Task InitializeSchedulerAndStartAsync();
+        Task SetUpAccountsAsync();
     }
 }

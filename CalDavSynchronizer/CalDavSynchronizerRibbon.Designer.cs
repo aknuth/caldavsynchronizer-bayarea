@@ -17,6 +17,9 @@ namespace CalDavSynchronizer
       SynchronizeNowButton.Label = Strings.Get($"Synchronize now");
       SynchronizeNowButton.ScreenTip = Strings.Get($"Synchronize now");
       SynchronizeNowButton.SuperTip = Strings.Get($"Start a manual synchronization of all active profiles.");
+      SetUpAccountsButton.Label = Strings.Get($"Set up calendars");
+      SetUpAccountsButton.ScreenTip = Strings.Get($"Set up calendars");
+      SetUpAccountsButton.SuperTip = Strings.Get($"Find all calendars and address books of your mail accounts on the server and set them up.");
       OptionsButton.Label = Strings.Get($"Synchronization Profiles");
       OptionsButton.ScreenTip = Strings.Get($"Synchronization Profiles");
       OptionsButton.SuperTip = Strings.Get($"Configure your synchronization profiles.");
@@ -58,6 +61,7 @@ namespace CalDavSynchronizer
     {
       this.tab1 = this.Factory.CreateRibbonTab();
       this.group1 = this.Factory.CreateRibbonGroup();
+      this.SetUpAccountsButton = this.Factory.CreateRibbonButton();
       this.SynchronizeNowButton = this.Factory.CreateRibbonButton();
       this.OptionsButton = this.Factory.CreateRibbonButton();
       this.GeneralOptionsButton = this.Factory.CreateRibbonButton();
@@ -77,6 +81,7 @@ namespace CalDavSynchronizer
       // 
       // group1
       // 
+      this.group1.Items.Add(this.SetUpAccountsButton);
       this.group1.Items.Add(this.SynchronizeNowButton);
       this.group1.Items.Add(this.OptionsButton);
       this.group1.Items.Add(this.GeneralOptionsButton);
@@ -85,6 +90,15 @@ namespace CalDavSynchronizer
       this.group1.Items.Add(this.StatusesButton);
       this.group1.Label = "CalDav Synchronizer";
       this.group1.Name = "group1";
+      // 
+      // SetUpAccountsButton
+      // 
+      this.SetUpAccountsButton.Image = global::CalDavSynchronizer.Properties.Resources.Options;
+      this.SetUpAccountsButton.KeyTip = "SU";
+      this.SetUpAccountsButton.Label = "Set up calendars";
+      this.SetUpAccountsButton.Name = "SetUpAccountsButton";
+      this.SetUpAccountsButton.ShowImage = true;
+      this.SetUpAccountsButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.SetUpAccountsButton_Click);
       // 
       // SynchronizeNowButton
       // 
@@ -158,6 +172,7 @@ namespace CalDavSynchronizer
 
     internal Microsoft.Office.Tools.Ribbon.RibbonTab tab1;
     internal Microsoft.Office.Tools.Ribbon.RibbonGroup group1;
+    internal Microsoft.Office.Tools.Ribbon.RibbonButton SetUpAccountsButton;
     internal Microsoft.Office.Tools.Ribbon.RibbonButton SynchronizeNowButton;
     internal Microsoft.Office.Tools.Ribbon.RibbonButton OptionsButton;
     internal Microsoft.Office.Tools.Ribbon.RibbonButton AboutButton;
