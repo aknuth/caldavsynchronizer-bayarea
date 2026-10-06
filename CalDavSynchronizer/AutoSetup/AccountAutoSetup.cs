@@ -221,10 +221,20 @@ namespace CalDavSynchronizer.AutoSetup
                 }
                 else
                 {
-                    using (var subFolder = GenericComObjectWrapper.Create(GetOrCreateSubFolder(defaultFolder, displayName, folderType)))
+                    try
                     {
-                        folderEntryId = subFolder.Inner.EntryID;
-                        folderStoreId = subFolder.Inner.StoreID;
+                        using (var subFolder = GenericComObjectWrapper.Create(GetOrCreateSubFolder(defaultFolder, displayName, folderType)))
+                        {
+                            folderEntryId = subFolder.Inner.EntryID;
+                            folderStoreId = subFolder.Inner.StoreID;
+                        }
+                    }
+                    catch (COMException x)
+                    {
+                        // Skip just this collection, the others are still set up.
+                        s_logger.Error($"AutoSetup: could not create folder '{displayName}' for '{collection.Uri}'.", x);
+                        report.Add($"  failed: folder '{displayName}': {x.Message}");
+                        continue;
                     }
                 }
 
@@ -267,7 +277,6 @@ namespace CalDavSynchronizer.AutoSetup
 
         private static Folder GetOrCreateSubFolder(Folder parent, string name, OlDefaultFolders folderType)
         {
-            name = name.Replace('\\', '-').Replace('/', '-');
             using (var folders = GenericComObjectWrapper.Create(parent.Folders))
             {
                 try
@@ -290,16 +299,27 @@ namespace CalDavSynchronizer.AutoSetup
         };
 
         /// <summary>
-        /// Shared collections are named after their owner, since they are typically just called "Calendar",
-        /// which would show up as a second "Calendar" in Outlook. A specific name is appended.
+        /// Shared collections are named after their owner (the part before the @), since they are typically just
+        /// called "Calendar", which would show up as a second "Calendar" in Outlook. A specific name is appended.
         /// </summary>
         private static string GetFolderName(Collection collection)
         {
+            string name;
             if (collection.OwnerEmailOrNull == null)
-                return collection.Name;
-            if (string.IsNullOrEmpty(collection.Name) || s_genericCollectionNames.Contains(collection.Name))
-                return collection.OwnerEmailOrNull;
-            return $"{collection.OwnerEmailOrNull} - {collection.Name}";
+            {
+                name = collection.Name;
+            }
+            else
+            {
+                var owner = collection.OwnerEmailOrNull.Split('@')[0];
+                name = string.IsNullOrEmpty(collection.Name) || s_genericCollectionNames.Contains(collection.Name)
+                    ? owner
+                    : $"{owner} - {collection.Name}";
+            }
+
+            // Folders of IMAP stores can't contain the IMAP hierarchy delimiter, which is often '.' or '/'
+            // ("Cannot create the folder"), and Outlook doesn't allow ''.
+            return name.Replace('.', ' ').Replace('/', '-').Replace('\\', '-');
         }
 
         private static string GetLastSegment(Uri uri) => uri.Segments.Last().TrimEnd('/');

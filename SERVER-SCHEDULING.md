@@ -161,8 +161,11 @@ Outlook.
 Geteilte Kalender: sabre/dav meldet als `DAV:owner` den Empfaenger der
 Freigabe, nicht den Besitzer (Test 2026-10-06: Ordner hiess nur `Calendar`).
 Der Besitzer kommt jetzt aus `DAV:invite` (bzw. `CS:invite`), dort steht er als
-*organizer*. Ordnername = Besitzer-Adresse, bei eigenem Kalendernamen
-`besitzer - Name`.
+*organizer*. Ordnername = Teil der Besitzer-Adresse vor dem `@`, bei eigenem
+Kalendernamen `besitzer - Name`. Punkte im Namen werden zu Leerzeichen: mit
+`accounting@bayarea-cc.com` meldete Outlook *Cannot create the folder*
+(vermutlich der IMAP-Hierarchietrenner `.`). Scheitert ein Ordner, wird nur
+diese Sammlung uebersprungen und gemeldet.
 
 Einschraenkung: Einladungen funktionieren sauber nur aus dem
 Standardkalender.
