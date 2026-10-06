@@ -218,7 +218,9 @@ namespace CalDavSynchronizer
             _availableVersionService = new AvailableVersionService();
             _updateChecker = new UpdateChecker(_availableVersionService, () => _generalOptionsDataAccess.IgnoreUpdatesTilVersion);
             _updateChecker.NewerVersionFound += UpdateChecker_NewerVersionFound;
-            _updateChecker.IsEnabled = generalOptions.ShouldCheckForNewerVersions;
+            // Disabled: the check asks the upstream project and would offer its release, which lacks server-side
+            // scheduling. To be pointed at our own release server later.
+            _updateChecker.IsEnabled = false;
 
             _reportGarbageCollection = new ReportGarbageCollection(_synchronizationReportRepository, TimeSpan.FromDays(generalOptions.MaxReportAgeInDays));
 
@@ -315,7 +317,7 @@ namespace CalDavSynchronizer
             try
             {
                 await Task.Delay(TimeSpan.FromSeconds(10));
-                SynchronizeNowAsync();
+                await RunSynchronizationNow();
             }
             catch (Exception x)
             {
@@ -328,7 +330,7 @@ namespace CalDavSynchronizer
         {
             s_logger.Info("Snyc triggered after Outlook Send/Receive finished");
             EnsureSynchronizationContext();
-            SynchronizeNowAsync();
+            RunSynchronizationNowNoThrow();
         }
 
         private void EnsureCacheCompatibility(Options[] options)
@@ -524,12 +526,39 @@ namespace CalDavSynchronizer
             ((Hierarchy) LogManager.GetRepository()).RaiseConfigurationChanged(EventArgs.Empty);
         }
 
+        /// <summary>
+        /// Triggered by the user, so the progress is shown however few items there are.
+        /// Automatic runs keep the configured threshold, otherwise a window would pop up at every interval.
+        /// </summary>
         public async void SynchronizeNowAsync()
         {
+            var showProgress = _totalProgressFactory.ShowProgress;
+            var threshold = _totalProgressFactory.LoadOperationThresholdForProgressDisplay;
+            _totalProgressFactory.ShowProgress = true;
+            _totalProgressFactory.LoadOperationThresholdForProgressDisplay = 0;
             try
             {
                 s_logger.Info("Synchronization manually triggered");
                 await _scheduler.RunNow();
+            }
+            catch (Exception x)
+            {
+                ExceptionHandler.Instance.DisplayException(x, s_logger);
+            }
+            finally
+            {
+                _totalProgressFactory.ShowProgress = showProgress;
+                _totalProgressFactory.LoadOperationThresholdForProgressDisplay = threshold;
+            }
+        }
+
+        private Task RunSynchronizationNow() => _scheduler.RunNow();
+
+        private async void RunSynchronizationNowNoThrow()
+        {
+            try
+            {
+                await RunSynchronizationNow();
             }
             catch (Exception x)
             {
@@ -631,7 +660,6 @@ namespace CalDavSynchronizer
                 ConfigureServicePointManager(newOptions);
                 ConfigureLogLevel(newOptions.EnableDebugLog);
 
-                _updateChecker.IsEnabled = newOptions.ShouldCheckForNewerVersions;
                 _reportGarbageCollection.MaxAge = TimeSpan.FromDays(newOptions.MaxReportAgeInDays);
 
                 _generalOptionsDataAccess.SaveOptions(newOptions);

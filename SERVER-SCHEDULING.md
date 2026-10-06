@@ -177,12 +177,29 @@ abgeschaltet - VSTO-Ladezeit, nicht unser Code (der laeuft erst danach).
 Abhilfe auf der VM:
 `reg add HKCU\Software\Microsoft\Office\16.0\Outlook\Resiliency\DoNotDisableAddinList /v CalDavSynchronizer /t REG_DWORD /d 1 /f`
 
+## Weitere Anpassungen
+
+- **Update-Pruefung abgeschaltet** (`ComponentContainer`): sie fragte das
+  Originalprojekt und haette Kunden dessen Version ohne Server-Scheduling
+  angeboten. Spaeter gegen den eigenen Server neu bauen.
+- **About ausgeblendet** (Menueband und Tray-Menue), Links und Update-Knopf
+  zeigen aufs Original. Beim Neubau an AGPL denken: Hinweis auf die
+  Originalautoren behalten und Link auf unseren Quelltext anbieten.
+- **Fortschritt bei *Synchronize now***: das vorhandene Fortschrittsfenster
+  erscheint bei manuellem Abgleich immer (Schwelle 0), beim automatischen
+  Abgleich weiter erst ab der Schwelle aus *General Options* (333).
+
 ## Naechste Schritte
 
 1. **Abspecken auf sabre/dav.** Automatische Einrichtung (siehe oben) ist
    gebaut. Danach: alle anderen Anbieterprofile, OAuth (Google, Swisscom),
    Aufgaben und die alten Einrichtungsdialoge entfernen.
-2. **Richtiger Installer** mit gueltigem Code-Signing-Zertifikat. Er soll das
+2. **Installer** mit dem vorhandenen Setup-Projekt
+   (`CalDavSynchronizer.Setup.vdproj`, braucht die VS-Erweiterung *Microsoft
+   Visual Studio Installer Projects*). Zertifikat vorerst selbst erstellt; der
+   Installer traegt das Add-in in die VSTO-Vertrauensliste ein, damit Outlook
+   nicht nachfragt. Gekauftes Code-Signing-Zertifikat spaeter (Kandidat:
+   Certum Open-Source-Zertifikat; Let's Encrypt stellt keine aus). Er soll das
    Add-in in Outlooks Liste *DoNotDisableAddinList* eintragen
    (`HKCU\Software\Microsoft\Office\16.0\Outlook\Resiliency\DoNotDisableAddinList`,
    Wert `CalDavSynchronizer` = DWORD 1), damit Outlook es nicht wegen
