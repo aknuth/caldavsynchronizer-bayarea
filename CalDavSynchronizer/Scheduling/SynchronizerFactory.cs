@@ -254,7 +254,7 @@ namespace CalDavSynchronizer.Scheduling
             return false;
         }
 
-        private static async System.Threading.Tasks.Task<HttpClient> CreateHttpClient(
+        private static System.Threading.Tasks.Task<HttpClient> CreateHttpClient(
             string username,
             SecureString password,
             string serverUrl,
@@ -301,7 +301,7 @@ namespace CalDavSynchronizer.Scheduling
                     }
 
                     httpClient.Timeout = calDavConnectTimeout;
-                    return httpClient;
+                    return System.Threading.Tasks.Task.FromResult(httpClient);
                 default:
                     throw new ArgumentOutOfRangeException("serverAdapterType");
             }
