@@ -198,7 +198,9 @@ namespace CalDavSynchronizer.Implementation.Events
             try
             {
                 // Already saved in ItemSend.
+                s_logger.Info("ItemSend: closing inspector.");
                 inspector.Close(OlInspectorClose.olDiscard);
+                s_logger.Info("ItemSend: inspector closed.");
             }
             catch (Exception x)
             {

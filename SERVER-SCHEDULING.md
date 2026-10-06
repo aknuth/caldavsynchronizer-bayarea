@@ -23,9 +23,11 @@ eigenes oeffentliches Repo (AGPL-3.0).
 | 2026-10-05 | Prototyp 2, Absage `zzz` aus dem geoeffneten Termin | Versand dreimal unterdrueckt, Termin blieb stehen: aus dem Fenster heraus loescht Outlook nicht selbst (anders als aus der Kalenderansicht). Prototyp 3 loescht dann selbst |
 | 2026-10-05 | Prototyp 3, Absage `yyy` aus dem geoeffneten Termin | Plugin: Outlook loescht selbst, `DELETE` auf dem Server ok. Absage kam bei Google nicht an - Fehler lag im sabre/dav-Dienst (email-amazon), dort behoben |
 
-Noch offen zu pruefen: *Accept Proposal* mit *Send Update* (ein Update bei
-Gmail?), Absage aus der Kalenderansicht, einzelnen Teilnehmer entfernen
-(schickt der Server ihm die Absage?).
+| 2026-10-06 | *Accept Proposal* mit *Send Update* | ok, ein Update bei Gmail |
+| 2026-10-06 | Absage aus der Kalenderansicht | ok, eine Absage bei Gmail |
+| 2026-10-06 | Zwei Teilnehmer, einer entfernt | ok, der Entfernte bekommt die Absage vom Server |
+| 2026-10-06 | Neue Besprechung senden | Rueckfrage *Save changes and send update* erscheint weiterhin. Offen: kommt sie von Outlook nach dem abgebrochenen Versand oder von `Inspector.Close`? Logzeilen `closing inspector` / `inspector closed` eingebaut |
+| 2026-10-06 | Einladung an interne Adresse | Keine Mail: sabre/dav liefert lokal in den Kalender des Empfaengers. Empfehlung fuer den Server: interne Empfaenger wie externe nur per iMIP einladen (sonst droht in Outlook ein doppelter Termin, wenn Mail und Synchronisation konkurrieren) |
 
 Hinweis: mit *Use GlobalAppointmentID* heissen neue Dateien auf dem Server
 `040000008200E000...ics` (Grossbuchstaben). Ein Suchmuster wie
