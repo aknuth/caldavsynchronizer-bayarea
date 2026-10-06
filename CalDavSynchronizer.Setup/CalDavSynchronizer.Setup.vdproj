@@ -2170,7 +2170,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_0FEA37A41DA84A838F435C53470176CF"
             {
-            "SourcePath" = "8:..\\CalDavSynchronizer\\bin\\Debug\\CalDavSynchronizer.dll.manifest"
+            "SourcePath" = "8:..\\CalDavSynchronizer\\bin\\Release\\CalDavSynchronizer.dll.manifest"
             "TargetName" = "8:CalDavSynchronizer.dll.manifest"
             "Tag" = "8:"
             "Folder" = "8:_B9464A368EDA4FBF813D9C26C4B34467"
@@ -4163,7 +4163,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_9DB623BB119C4BC78C98A0D7610B33E2"
             {
-            "SourcePath" = "8:..\\CalDavSynchronizer\\bin\\Debug\\CalDavSynchronizer.vsto"
+            "SourcePath" = "8:..\\CalDavSynchronizer\\bin\\Release\\CalDavSynchronizer.vsto"
             "TargetName" = "8:CalDavSynchronizer.vsto"
             "Tag" = "8:"
             "Folder" = "8:_B9464A368EDA4FBF813D9C26C4B34467"

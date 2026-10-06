@@ -202,6 +202,12 @@ VS-Erweiterung *Microsoft Visual Studio Installer Projects 2022*).
   (bis 4.7.1) wird automatisch ersetzt. Deshalb Version ueber 4.7.1, ein
   Windows-Installer ersetzt nur aeltere Versionen.
 - Signierschritt des Originalautors (Certum-Zertifikat) entfernt.
+- **Installer immer in *Release* bauen** (Auswahl in der Symbolleiste, dann
+  *Projektmappe neu erstellen*, Ergebnis in `CalDavSynchronizer.Setup\Release\`).
+  `CalDavSynchronizer.vsto` und `.dll.manifest` sind im Setup fest mit
+  `bin\Release` eingetragen, die DLL kommt aus der gewaehlten Konfiguration;
+  ein Debug-Setup wuerde Release-Manifest und Debug-DLL mischen und VSTO
+  verweigert das Laden (Pruefsummen). Entwickeln/F5 weiter in *Debug*.
 - Traegt das Add-in in `HKCU\Software\Microsoft\Office\16.0\Outlook\Resiliency\DoNotDisableAddinList`
   ein. Das installierte Add-in heisst in der Registry `CalDavSynchronizer.1`
   (der Debug-Build `CalDavSynchronizer`). Gilt fuer den Benutzer, der
