@@ -130,15 +130,16 @@ namespace CalDavSynchronizer.Implementation.Events
                 var isWholeMeetingCancelled = meetingStatus == OlMeetingStatus.olMeetingCanceled;
                 if (!isWholeMeetingCancelled)
                 {
-                    // Save before cancelling, while still inside ItemSend: an unsaved meeting makes Outlook
-                    // ask "save changes and send update" right after the cancelled send. If saving fails,
-                    // Outlook sends as usual.
-                    // FInvited makes Outlook treat the meeting as sent ("Send Update" on later changes),
-                    // the marker hands its scheduling to the server.
+                    // Save before cancelling, while still inside ItemSend. If saving fails, Outlook sends as usual.
+                    // The marker hands the scheduling of the meeting to the server.
+                    // FInvited makes Outlook treat the meeting as sent ("Send Update" on later changes). With an
+                    // open inspector it is set only after closing it: set before, Outlook sees changes since
+                    // the "sent" state when closing and asks "save changes and send update".
                     using (var propertyAccessor = GenericComObjectWrapper.Create(appointment.PropertyAccessor))
                     {
-                        propertyAccessor.Inner.SetProperty(PR_FINVITED, true);
                         propertyAccessor.Inner.SetProperty(PR_SERVER_SCHEDULED, true);
+                        if (inspectorAppointment == null)
+                            propertyAccessor.Inner.SetProperty(PR_FINVITED, true);
                     }
 
                     appointment.Save();
@@ -156,7 +157,7 @@ namespace CalDavSynchronizer.Implementation.Events
                 }
                 else if (inspectorAppointment != null)
                 {
-                    SynchronizationContext.Current.Post(_ => CloseInspector(inspector), null);
+                    SynchronizationContext.Current.Post(_ => CloseInspectorAndMarkInvited(inspector, appointment), null);
                 }
             }
             catch (Exception x)
@@ -193,23 +194,36 @@ namespace CalDavSynchronizer.Implementation.Events
             }
         }
 
-        private void CloseInspector(Inspector inspector)
+        private void CloseInspectorAndMarkInvited(Inspector inspector, AppointmentItem appointment)
         {
             try
             {
                 // Already saved in ItemSend.
-                s_logger.Info("ItemSend: closing inspector.");
                 inspector.Close(OlInspectorClose.olDiscard);
-                s_logger.Info("ItemSend: inspector closed.");
             }
             catch (Exception x)
             {
                 // The user may have closed it already.
                 s_logger.Warn("ItemSend: could not close inspector.", x);
             }
+
+            try
+            {
+                using (var propertyAccessor = GenericComObjectWrapper.Create(appointment.PropertyAccessor))
+                {
+                    propertyAccessor.Inner.SetProperty(PR_FINVITED, true);
+                }
+
+                appointment.Save();
+            }
+            catch (Exception x)
+            {
+                s_logger.Warn("ItemSend: could not mark meeting as invited.", x);
+            }
             finally
             {
                 Marshal.ReleaseComObject(inspector);
+                Marshal.ReleaseComObject(appointment);
             }
         }
 

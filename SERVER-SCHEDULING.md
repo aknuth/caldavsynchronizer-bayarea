@@ -27,6 +27,7 @@ eigenes oeffentliches Repo (AGPL-3.0).
 | 2026-10-06 | Absage aus der Kalenderansicht | ok, eine Absage bei Gmail |
 | 2026-10-06 | Zwei Teilnehmer, einer entfernt | ok, der Entfernte bekommt die Absage vom Server |
 | 2026-10-06 | Neue Besprechung senden | Rueckfrage *Save changes and send update* erscheint weiterhin. Offen: kommt sie von Outlook nach dem abgebrochenen Versand oder von `Inspector.Close`? Logzeilen `closing inspector` / `inspector closed` eingebaut |
+| 2026-10-06 | Dasselbe mit Logzeilen | `Close` kehrt nach 0,5 s zurueck, die Rueckfrage kommt danach. Ursache vermutlich `PidLidFInvited` vor dem Schliessen: Outlook haelt die Besprechung fuer verschickt und den Fensterinhalt fuer eine Aenderung. Jetzt erst nach dem Schliessen gesetzt |
 | 2026-10-06 | Einladung an interne Adresse | Keine Mail: sabre/dav liefert lokal in den Kalender des Empfaengers. Empfehlung fuer den Server: interne Empfaenger wie externe nur per iMIP einladen (sonst droht in Outlook ein doppelter Termin, wenn Mail und Synchronisation konkurrieren) |
 
 Hinweis: mit *Use GlobalAppointmentID* heissen neue Dateien auf dem Server
