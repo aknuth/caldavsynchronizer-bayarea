@@ -92,9 +92,9 @@ namespace CalDavSynchronizer.DataAccess
         }
 
         /// <summary>
-        /// Email address of the sharer, read from the sharing invite (DAV:invite, or CS:invite of calendarserver),
-        /// which lists the owner as organizer. Servers like sabre/dav report the sharee as DAV:owner of a shared
-        /// calendar instance, so DAV:owner can't tell who shared it.
+        /// Email address of the sharer, read from the sharing invite: the sharee with shared-owner access in
+        /// DAV:invite, or the organizer in CS:invite of calendarserver. Servers like sabre/dav report the sharee
+        /// as DAV:owner of a shared calendar instance, so DAV:owner can't tell who shared it.
         /// </summary>
         public async Task<string> GetSharingOwnerEmailOrNull(Uri calendarUri)
         {
@@ -116,7 +116,7 @@ namespace CalDavSynchronizer.DataAccess
                         </D:propfind>
                  ");
 
-                var organizerHref = properties.XmlDocument.SelectSingleNode("/D:multistatus/D:response/D:propstat/D:prop/D:invite/D:organizer/D:href", properties.XmlNamespaceManager)
+                var organizerHref = properties.XmlDocument.SelectSingleNode("/D:multistatus/D:response/D:propstat/D:prop/D:invite/D:sharee[D:share-access/D:shared-owner]/D:href", properties.XmlNamespaceManager)
                                     ?? properties.XmlDocument.SelectSingleNode("/D:multistatus/D:response/D:propstat/D:prop/CS:invite/CS:organizer/D:href", properties.XmlNamespaceManager);
                 var href = organizerHref?.InnerText?.Trim();
                 if (string.IsNullOrEmpty(href))
