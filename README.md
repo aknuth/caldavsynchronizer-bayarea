@@ -30,6 +30,9 @@ server: [sabre/dav](https://sabre.io/dav/) with server-side scheduling
   provider profiles, OAuth, and the bulk profile setup are removed.
 - The update check in *About* reads `latest.json` from our release server.
 
+How it works, the reasons behind it, known limitations and the server
+requirements are described in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+
 ## Requirements
 
 - Windows with Outlook 2016 or later (Microsoft 365), .NET Framework 4.8 and
