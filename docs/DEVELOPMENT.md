@@ -229,7 +229,7 @@ would have offered its release. *Check for Updates* in About reads
 `https://download.bayarea-cc.com/caldavsynchronizer/latest.json`:
 
 ```json
-{ "version": "5.0.1", "url": "https://download.bayarea-cc.com/caldavsynchronizer/setup.exe", "notes": "optional" }
+{ "version": "5.0.1", "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.0.1.zip", "notes": "optional" }
 ```
 
 If that version is newer than the installed one, it offers to open the
@@ -306,9 +306,16 @@ never in the repository. To build on another machine, import the `.pfx` into
    - `CalDavSynchronizer/Properties/AssemblyInfoVersion.cs`
 2. Build in *Release* and build the setup.
 3. Uninstalling first is only needed for a setup with the same version.
-4. Upload `setup.exe` (and `.msi`) to
-   `https://download.bayarea-cc.com/caldavsynchronizer/`.
-5. Update `latest.json` there.
+4. Zip both files of `CalDavSynchronizer.Setup\Release\`. `setup.exe` is
+   only the bootstrapper: it checks the prerequisites and runs the `.msi`
+   next to it.
+   ```powershell
+   Compress-Archive -Path CalDavSynchronizer.Setup\Release\setup.exe, CalDavSynchronizer.Setup\Release\CalDavSynchronizer.Setup.msi -DestinationPath CalDavSynchronizer-BayArea-5.0.1.zip
+   ```
+   Upload the zip to `https://download.bayarea-cc.com/caldavsynchronizer/`.
+   The version in the name keeps browsers and proxies from serving an old
+   cached file.
+5. Update `latest.json` there (`url` pointing to the new zip).
 6. Commit, tag (`v5.0.1`), push. The AGPL requires the source of every
    released version to be available.
 

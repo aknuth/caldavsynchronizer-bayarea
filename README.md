@@ -43,7 +43,7 @@ requirements are described in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## Usage
 
-1. Install with `setup.exe`.
+1. Unzip the release and run `setup.exe`.
 2. In Outlook, open the *CalDav Synchronizer* ribbon and click
    **Set up calendars**.
 3. Click **Synchronize now** (otherwise the profiles synchronize at their
@@ -68,8 +68,10 @@ Invitations work reliably only from the default calendar of the account.
    Visual Studio asks to change the ProductCode) and in
    `CalDavSynchronizer/Properties/AssemblyInfoVersion.cs`.
 2. Build the installer in *Release*.
-3. Upload `setup.exe` to the release server and update `latest.json`
-   (template in `release/latest.json`).
+3. Zip `setup.exe` and `CalDavSynchronizer.Setup.msi` (both are needed:
+   `setup.exe` checks the prerequisites and runs the `.msi` next to it) as
+   `CalDavSynchronizer-BayArea-<version>.zip`, upload it to the release server
+   and update `latest.json` there (template in `release/latest.json`).
 4. Tag the commit and push it, so the source of every released version is
    available.
 
