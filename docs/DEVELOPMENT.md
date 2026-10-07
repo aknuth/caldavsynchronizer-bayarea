@@ -312,7 +312,11 @@ never in the repository. To build on another machine, import the `.pfx` into
    ```powershell
    Compress-Archive -Path CalDavSynchronizer.Setup\Release\setup.exe, CalDavSynchronizer.Setup\Release\CalDavSynchronizer.Setup.msi -DestinationPath CalDavSynchronizer-BayArea-5.0.1.zip
    ```
-   Upload the zip to `https://download.bayarea-cc.com/caldavsynchronizer/`.
+   Upload the zip to `https://download.bayarea-cc.com/caldavsynchronizer/`,
+   for example with the OpenSSH client built into Windows:
+   ```powershell
+   scp CalDavSynchronizer-BayArea-5.0.1.zip release\latest.json <user>@<download server>:<download directory>/caldavsynchronizer/
+   ```
    The version in the name keeps browsers and proxies from serving an old
    cached file.
 5. Update `latest.json` there (`url` pointing to the new zip).
