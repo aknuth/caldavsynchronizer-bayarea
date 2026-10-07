@@ -263,6 +263,13 @@ selben PC (die Vertrauensliste gilt nur fuer den installierenden).
 Anbieter-Logos entfernt. Der Dialog zur Auswahl des Profiltyps entfaellt bei
 nur einem Typ; *Add new profile* legt direkt ein generisches Profil an.
 
+- **General Options entschlackt** (2026-10-07): entfernt sind *Automatically
+  check for newer versions* (wirkungslos) sowie die Schalter fuer fremde
+  Server *Accept invalid chars*, *useUnsafeHeaderParsing*, *Disable Certificate
+  Validation*, *Client Certificates*, *SSL3*. Nur die Oberflaeche ist weg, die
+  Einstellungen bleiben in den Daten (Standard: aus). Wer sie im Original
+  aktiviert hatte, behaelt sie unsichtbar.
+
 ## Release-Ablauf (Vorschlag, noch abzustimmen)
 
 1. Version erhoehen: Setup-Projekt `ProductVersion` (VS fragt nach neuem
