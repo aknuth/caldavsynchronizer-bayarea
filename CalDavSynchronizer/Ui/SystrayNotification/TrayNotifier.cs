@@ -48,7 +48,7 @@ namespace CalDavSynchronizer.Ui.SystrayNotification
             trayMenu.MenuItems.Add(Strings.Get($"Synchronization Profiles"), delegate { ShowOptions(); });
             trayMenu.MenuItems.Add(Strings.Get($"General Options"), delegate { ShowGeneralOptions(); });
             trayMenu.MenuItems.Add("-");
-            // About is hidden until rebuilt: links and update check point to the upstream project.
+            trayMenu.MenuItems.Add(Strings.Get($"About"), delegate { ShowAbout(); });
 
             // Create a tray icon. In this example we use a
             // standard system icon for simplicity, but you

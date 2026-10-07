@@ -771,11 +771,21 @@ namespace CalDavSynchronizer
                 var currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
                 if (availableVersion > currentVersion)
                 {
-                    ShowGetNewVersionForm(
-                        new NewerVersionFoundEventArgs(
-                            availableVersion,
-                            _availableVersionService.GetWhatsNewNoThrow(currentVersion, availableVersion),
-                            _availableVersionService.DownloadLink));
+                    // The installer is run by hand, so just offer the download.
+                    var notes = _availableVersionService.GetWhatsNewNoThrow(currentVersion, availableVersion);
+                    var downloadLink = _availableVersionService.DownloadLink;
+                    var message = Strings.Get($"Version {availableVersion} is available (installed: {currentVersion.ToString(3)}).");
+                    if (!string.IsNullOrEmpty(notes))
+                        message += Environment.NewLine + Environment.NewLine + notes;
+
+                    if (downloadLink == null)
+                    {
+                        MessageBox.Show(message, MessageBoxTitle);
+                    }
+                    else if (MessageBox.Show(message + Environment.NewLine + Environment.NewLine + Strings.Get($"Open the download?"), MessageBoxTitle, MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+                    {
+                        System.Diagnostics.Process.Start(downloadLink.ToString());
+                    }
                 }
                 else
                 {

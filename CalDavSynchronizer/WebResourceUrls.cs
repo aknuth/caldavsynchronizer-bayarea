@@ -22,12 +22,16 @@ namespace CalDavSynchronizer
     public static class WebResourceUrls
     {
         public static Uri GlobalOptionsFile => new Uri("https://sourceforge.net/p/outlookcaldavsynchronizer/code/ci/master/tree/GlobalOptions.xml?format=raw");
-        public static Uri SiteContainingNewestVersion => new Uri("https://sourceforge.net/projects/outlookcaldavsynchronizer/best_release.json");
+        /// <summary>{ "version": "5.0.1", "url": "https://.../setup.exe", "notes": "optional" }</summary>
+        public static Uri SiteContainingNewestVersion => new Uri("https://download.bayarea-cc.com/caldavsynchronizer/latest.json");
         public static Uri LatestVersionZipFile => new Uri("https://sourceforge.net/projects/outlookcaldavsynchronizer/files/latest/download?source=files");
         public static Uri ReadMeFile => new Uri("https://sourceforge.net/p/outlookcaldavsynchronizer/code/ci/master/tree/README.md?format=raw");
         public static Uri ReadMeFileDownloadSite => new Uri("https://sourceforge.net/projects/outlookcaldavsynchronizer/files/README.md/download");
         public static Uri HelpSite => new Uri("https://caldavsynchronizer.org/documentation/");
         public static Uri DonationSite => new Uri("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=PWA2N6P5WRSJJ&lc=US");
         public static Uri ProjectHomeSite => new Uri("https://caldavsynchronizer.org/");
+        public static Uri SourceCodeSite => new Uri("https://github.com/aknuth/caldavsynchronizer-bayarea");
+        public static Uri OriginalProjectSite => new Uri("https://github.com/aluxnimm/outlookcaldavsynchronizer");
+        public const string SupportEmailAddress = "support@bayarea-cc.com";
     }
 }

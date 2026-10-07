@@ -184,9 +184,18 @@ Abhilfe auf der VM:
 - **Update-Pruefung abgeschaltet** (`ComponentContainer`): sie fragte das
   Originalprojekt und haette Kunden dessen Version ohne Server-Scheduling
   angeboten. Spaeter gegen den eigenen Server neu bauen.
-- **About ausgeblendet** (Menueband und Tray-Menue), Links und Update-Knopf
-  zeigen aufs Original. Beim Neubau an AGPL denken: Hinweis auf die
-  Originalautoren behalten und Link auf unseren Quelltext anbieten.
+- **About neu** (2026-10-07): Bay-Area-Logo (`Resources/BayAreaLogo.png`,
+  eingebettet), Version, Link auf unseren Quelltext
+  https://github.com/aknuth/caldavsynchronizer-bayarea (AGPL), Hinweis auf die
+  Originalautoren und das Originalprojekt, Support support@bayarea-cc.com,
+  Lizenztext mit Aenderungsvermerk vor dem Originalvermerk.
+- **Update-Pruefung nur auf Knopfdruck** (*Check for Updates* im About). Liest
+  https://download.bayarea-cc.com/caldavsynchronizer/latest.json:
+  ```json
+  { "version": "5.0.1", "url": "https://download.bayarea-cc.com/caldavsynchronizer/setup.exe", "notes": "optional" }
+  ```
+  Ist die Version neuer als die installierte, fragt das Plugin, ob es die
+  Download-URL im Browser oeffnen soll. Keine automatische Installation.
 - **Fortschritt bei *Synchronize now***: das vorhandene Fortschrittsfenster
   erscheint bei manuellem Abgleich immer (Schwelle 0), beim automatischen
   Abgleich weiter erst ab der Schwelle aus *General Options* (333).
@@ -253,6 +262,16 @@ selben PC (die Vertrauensliste gilt nur fuer den installierenden).
 `Ui/Options/BulkOptions`) entfernt - ersetzt durch *Set up calendars*. Alle
 Anbieter-Logos entfernt. Der Dialog zur Auswahl des Profiltyps entfaellt bei
 nur einem Typ; *Add new profile* legt direkt ein generisches Profil an.
+
+## Release-Ablauf (Vorschlag, noch abzustimmen)
+
+1. Version erhoehen: Setup-Projekt `ProductVersion` (VS fragt nach neuem
+   ProductCode -> Ja) und `CalDavSynchronizer/Properties/AssemblyInfoVersion.cs`.
+2. In *Release* bauen, Setup-Projekt erstellen.
+3. `setup.exe` und `.msi` nach `download.bayarea-cc.com/caldavsynchronizer/`
+   hochladen (am besten mit Versionsnummer im Namen).
+4. `latest.json` dort aktualisieren.
+5. Commit, Tag `v5.0.1`, Push ins eigene Repo (AGPL: Quelltext zur Version).
 
 ## Naechste Schritte
 

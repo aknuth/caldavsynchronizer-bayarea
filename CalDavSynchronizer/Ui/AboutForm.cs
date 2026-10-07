@@ -17,6 +17,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -38,21 +39,37 @@ namespace CalDavSynchronizer.Ui
             InitializeComponent();
 
             btnOK.Text = Strings.Get($"OK");
-            label1.Text = Strings.Get($"Team:");
-            _linkLabelPayPal.Text = Strings.Get($"Donate with PayPal");
-            _linkLabelHelp.Text = Strings.Get($"Documentation and Tutorials");
             _checkForUpdatesButton.Text = Strings.Get($"Check for Updates");
             Text = Strings.Get($"About");
 
-            _versionLabel.Text = Strings.Get($"Version: {Assembly.GetExecutingAssembly().GetName().Version}");
+            _versionLabel.Text = Strings.Get($"Bay Area Edition, version {Assembly.GetExecutingAssembly().GetName().Version.ToString(3)}");
 
-            this._linkLabelProject.Text = WebResourceUrls.ProjectHomeSite.ToString();
+            // AGPL-3.0: offer the source code of this modified version
+            SetLink(_linkLabelProject, Strings.Get($"Source code: "), WebResourceUrls.SourceCodeSite.ToString());
 
+            label1.Text = Strings.Get($"Based on CalDavSynchronizer by");
             _linkLabelTeamMembers.LinkClicked += _linkLabelTeamMembers_LinkClicked;
             _linkLabelTeamMembers.Text = string.Empty;
+            _linkLabelTeamMembers.Left = label1.Right + 2;
             AddTeamMember("Alexander Nimmervoll", "http://sourceforge.net/u/nimm/profile/");
             AddTeamMember("Gerhard Zehetbauer", "http://sourceforge.net/u/nertsch/profile/");
-            _logoPictureBox.Image = Properties.Resources.ApplicationLogoLarge;
+
+            SetLink(_linkLabelHelp, Strings.Get($"Original project: "), WebResourceUrls.OriginalProjectSite.ToString());
+            SetLink(_linkLabelPayPal, Strings.Get($"Support: "), WebResourceUrls.SupportEmailAddress);
+
+            using (var logo = typeof(AboutForm).Assembly.GetManifestResourceStream("CalDavSynchronizer.Resources.BayAreaLogo.png"))
+            {
+                // Copy into a Bitmap: an Image from a stream needs the stream for its whole lifetime.
+                if (logo != null)
+                    using (var image = Image.FromStream(logo))
+                        _logoPictureBox.Image = new Bitmap(image);
+            }
+        }
+
+        private static void SetLink(LinkLabel linkLabel, string prefix, string link)
+        {
+            linkLabel.Text = prefix + link;
+            linkLabel.LinkArea = new LinkArea(prefix.Length, link.Length);
         }
 
         public sealed override string Text
@@ -83,17 +100,19 @@ namespace CalDavSynchronizer.Ui
 
         private void _linkLabelProject_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Process.Start(_linkLabelProject.Text);
+            Process.Start(WebResourceUrls.SourceCodeSite.ToString());
         }
 
+        // The designer names are from the upstream dialog: the PayPal link is now the support address,
+        // the help link the original project.
         private void linkLabelPayPal_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Process.Start(WebResourceUrls.DonationSite.ToString());
+            Process.Start("mailto:" + WebResourceUrls.SupportEmailAddress);
         }
 
         private void linkLabelHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Process.Start(WebResourceUrls.HelpSite.ToString());
+            Process.Start(WebResourceUrls.OriginalProjectSite.ToString());
         }
 
         private void CheckForUpdatesButton_Click(object sender, EventArgs e)

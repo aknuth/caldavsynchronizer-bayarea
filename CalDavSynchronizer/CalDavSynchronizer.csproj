@@ -667,6 +667,7 @@
     <Compile Include="Utilities\X11Colors.cs" />
     <Compile Include="Utilities\X11Color.cs" />
     <Compile Include="WebResourceUrls.cs" />
+    <EmbeddedResource Include="Resources\BayAreaLogo.png" />
     <EmbeddedResource Include="CalDavSynchronizerRibbon.resx">
       <DependentUpon>CalDavSynchronizerRibbon.cs</DependentUpon>
     </EmbeddedResource>

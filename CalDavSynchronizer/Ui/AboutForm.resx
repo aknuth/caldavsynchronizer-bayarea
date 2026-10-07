@@ -118,7 +118,14 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="_licenseTextBox.Text" xml:space="preserve">
-    <value>CalDavSynchronizer (https://caldavsynchronizer.org/)
+    <value>CalDavSynchronizer (Bay Area Edition)
+Copyright (c) 2026 Bay Area Affiliates
+Modified version, source code: https://github.com/aknuth/caldavsynchronizer-bayarea
+Changes: the CalDAV server sends meeting invitations instead of Outlook,
+automatic calendar setup, reduced to generic CalDAV/CardDAV.
+
+Based on:
+CalDavSynchronizer (https://caldavsynchronizer.org/)
 Copyright (c) 2015-2019 Gerhard Zehetbauer
 Copyright (c) 2015-2019 Alexander Nimmervoll
 powered by Generalize-IT Solutions OG, 1210 Vienna, Austria

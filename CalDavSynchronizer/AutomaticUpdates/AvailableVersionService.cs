@@ -16,18 +16,20 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using System;
-using System.Text.RegularExpressions;
-using log4net;
 using CalDavSynchronizer.DataAccess;
-using CalDavSynchronizer.Globalization;
 using Newtonsoft.Json.Linq;
 
 namespace CalDavSynchronizer.AutomaticUpdates
 {
     internal class AvailableVersionService : IAvailableVersionService
     {
-        private static readonly ILog s_logger = LogManager.GetLogger(System.Reflection.MethodInfo.GetCurrentMethod().DeclaringType);
+        private Uri _downloadLink;
+        private string _notes;
 
+        /// <summary>
+        /// Reads WebResourceUrls.SiteContainingNewestVersion, a JSON file on our release server:
+        /// { "version": "5.0.1", "url": "https://.../setup.exe", "notes": "optional text" }
+        /// </summary>
         public Version GetVersionOfDefaultDownload()
         {
             string site;
@@ -37,74 +39,20 @@ namespace CalDavSynchronizer.AutomaticUpdates
                 site = client.DownloadString(WebResourceUrls.SiteContainingNewestVersion);
             }
 
-            var bestReleaseJObject = JObject.Parse(site);
+            var latest = JObject.Parse(site);
 
-            if (!(bestReleaseJObject["release"]?["filename"] is JValue fileNameValue))
-                return null;
+            _downloadLink = latest["url"] is JValue urlValue && Uri.TryCreate(urlValue.Value<string>(), UriKind.Absolute, out var url)
+                ? url
+                : null;
+            _notes = (latest["notes"] as JValue)?.Value<string>();
 
-            var match = Regex.Match(fileNameValue.Value<string>(), @"/(?<Major>\d+).(?<Minor>\d+).(?<Build>\d+)/");
-
-            if (match.Success)
-            {
-                var availableVersion = new Version(
-                    int.Parse(match.Groups["Major"].Value),
-                    int.Parse(match.Groups["Minor"].Value),
-                    int.Parse(match.Groups["Build"].Value));
-
-                return availableVersion;
-            }
-            else
-            {
-                return null;
-            }
+            return latest["version"] is JValue versionValue && Version.TryParse(versionValue.Value<string>(), out var version)
+                ? version
+                : null;
         }
 
-        public string GetWhatsNewNoThrow(Version oldVersion, Version newVersion)
-        {
-            try
-            {
-                string readme;
+        public string GetWhatsNewNoThrow(Version oldVersion, Version newVersion) => _notes ?? string.Empty;
 
-                using (var client = HttpUtility.CreateWebClient())
-                {
-                    readme = client
-                        .DownloadString(WebResourceUrls.ReadMeFile)
-                        .Replace("\n", Environment.NewLine).Replace("\t", "   ");
-                }
-
-                var start = Find(readme, newVersion);
-                var end = Find(readme, oldVersion);
-
-                if (start == -1 || end == -1)
-                {
-                    if (start == -1)
-                        s_logger.ErrorFormat("Did not find Version '{0}' in readme.md", newVersion);
-
-                    if (end == -1)
-                        s_logger.ErrorFormat("Did not find Version '{0}' in readme.md", oldVersion);
-
-                    return Strings.Get($"Did not find any news.");
-                }
-
-                return readme.Substring(start, end - start);
-            }
-            catch (Exception x)
-            {
-                s_logger.Error(null, x);
-                return Strings.Get($"Error while trying to fetch the news.\r\nPlease see logfile for details.");
-            }
-        }
-
-
-        private static int Find(string contents, Version version)
-        {
-            var match = Regex.Match(contents, string.Format(@"####\s*{0}\s*####", version.ToString(3)));
-            return match.Success ? match.Index : -1;
-        }
-
-        public Uri DownloadLink
-        {
-            get { return WebResourceUrls.LatestVersionZipFile; }
-        }
+        public Uri DownloadLink => _downloadLink;
     }
 }

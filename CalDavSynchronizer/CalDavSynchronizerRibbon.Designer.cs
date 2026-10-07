@@ -134,8 +134,6 @@ namespace CalDavSynchronizer
       this.AboutButton.Label = "About";
       this.AboutButton.Name = "AboutButton";
       this.AboutButton.ShowImage = true;
-      // Hidden until rebuilt: links and update check point to the upstream project.
-      this.AboutButton.Visible = false;
       this.AboutButton.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.AboutButton_Click);
       // 
       // ReportsButton
