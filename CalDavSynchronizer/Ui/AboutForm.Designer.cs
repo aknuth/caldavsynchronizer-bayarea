@@ -128,10 +128,10 @@ namespace CalDavSynchronizer.Ui
       // 
       // _logoPictureBox
       // 
-      this._logoPictureBox.Location = new System.Drawing.Point(448, 11);
+      this._logoPictureBox.Location = new System.Drawing.Point(514, 11);
       this._logoPictureBox.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
       this._logoPictureBox.Name = "_logoPictureBox";
-      this._logoPictureBox.Size = new System.Drawing.Size(147, 102);
+      this._logoPictureBox.Size = new System.Drawing.Size(80, 72);
       this._logoPictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
       this._logoPictureBox.TabIndex = 7;
       this._logoPictureBox.TabStop = false;
