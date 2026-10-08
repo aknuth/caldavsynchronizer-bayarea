@@ -319,7 +319,8 @@ never in the repository. To build on another machine, import the `.pfx` into
    ```
    The version in the name keeps browsers and proxies from serving an old
    cached file.
-5. Update `latest.json` there (`url` pointing to the new zip).
+5. Update `latest.json` there (`url` pointing to the new zip). Upload the zip
+   first, so `latest.json` never points to a missing file.
 6. Commit, tag (`v5.0.1`), push. The AGPL requires the source of every
    released version to be available.
 
@@ -338,5 +339,6 @@ never in the repository. To build on another machine, import the `.pfx` into
 | 2026-10-06 | remove one of two attendees | removed attendee gets the cancellation from the server |
 | 2026-10-06 | "send update" prompt on first send | caused by setting `PidLidFInvited` before closing; fixed |
 | 2026-10-06 | recipient on the same server | no mail (local delivery), server change needed (section 4) |
+| 2026-10-08 | recipient on the same server, after the server change | exactly one invitation, exactly one reply back |
 | 2026-10-06 | automatic setup | own calendar and address book on default folders, shared calendar as read-only subfolder named after its owner |
 | 2026-10-06 | installer | no trust prompt, add-in not disabled after several restarts |
