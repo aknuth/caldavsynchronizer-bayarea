@@ -51,6 +51,9 @@ requirements are described in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 Invitations work reliably only from the default calendar of the account.
 
+A step-by-step checklist for installing at a customer is in
+[docs/CUSTOMER-SETUP.md](docs/CUSTOMER-SETUP.md).
+
 ## Building
 
 - Visual Studio 2022 with the *Office/SharePoint development* workload and the
