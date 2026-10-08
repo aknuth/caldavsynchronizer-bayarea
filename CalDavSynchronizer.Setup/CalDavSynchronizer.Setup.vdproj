@@ -6512,7 +6512,7 @@
                             "ContextData" = "8:"
                             "Attributes" = "3:0"
                             "Setting" = "3:2"
-                            "Value" = "8:The installer will guide you through the steps required to install [ProductName] on your computer. This addin works for Outlook 2007 - 2021 and Outlook 365 for Desktop, but Outlook 2013 or higher is recommended! Outlook 2007 only supports installing addins for the current user, so don't choose Everyone and install with the default option \"Just me\"."
+                            "Value" = "8:The installer will guide you through the steps required to install [ProductName] on your computer. This add-in works with Outlook 2016 or later and Microsoft 365 for desktop. Please close Outlook before you continue."
                             "DefaultValue" = "8:#1215"
                             "UsePlugInResources" = "11:TRUE"
                             }
