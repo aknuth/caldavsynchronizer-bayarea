@@ -28,6 +28,7 @@ using CalDavSynchronizer.Contracts;
 using CalDavSynchronizer.Globalization;
 using CalDavSynchronizer.ProfileTypes;
 using CalDavSynchronizer.Ui.Options.Models;
+using CalDavSynchronizer.Utilities;
 using CalDavSynchronizer.Ui.Options.ViewModels.Mapping;
 using log4net;
 using Microsoft.Office.Interop.Outlook;
@@ -338,6 +339,41 @@ namespace CalDavSynchronizer.Ui.Options.ViewModels
 
             if (_options.Count > 0 && _expandAllSyncProfiles)
                 ExpandAll();
+        }
+
+        private string _initialStateOrNull;
+
+        /// <summary>
+        /// Remembers the profiles as loaded, so that closing the window without changes doesn't ask to save.
+        /// </summary>
+        public void RememberInitialState()
+        {
+            _initialStateOrNull = GetState();
+        }
+
+        /// <summary>
+        /// True if the profiles differ from the state remembered by RememberInitialState (or none was remembered).
+        /// </summary>
+        public bool HasChanges => _initialStateOrNull == null || _initialStateOrNull != GetState() || GetOneTimeTasks().Length > 0;
+
+        private string GetState()
+        {
+            var options = GetOptionsCollection();
+            var passwords = new StringBuilder();
+            foreach (var option in options)
+            {
+                // The protected password is encrypted with a new random salt every time, so compare the plain
+                // password instead, and only as hash.
+                passwords.Append(SecureStringUtility.ToUnsecureString(option.Password)).Append('\0');
+                option.Salt = null;
+                option.ProtectedPassword = null;
+            }
+
+            using (var sha256 = System.Security.Cryptography.SHA256.Create())
+            {
+                var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(passwords.ToString()));
+                return Serializer<Contracts.Options[]>.Serialize(options) + Convert.ToBase64String(hash);
+            }
         }
 
         public Contracts.Options[] GetOptionsCollection()

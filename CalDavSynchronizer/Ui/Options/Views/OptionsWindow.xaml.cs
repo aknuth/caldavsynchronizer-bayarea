@@ -57,6 +57,13 @@ namespace CalDavSynchronizer.Ui.Options.Views
         {
             if (DataContext is OptionsCollectionViewModel viewModel)
             {
+                // Closed with the window's X: ask only if something was changed.
+                if (!DialogResult.HasValue && !viewModel.HasChanges)
+                {
+                    DialogResult = false;
+                    return;
+                }
+
                 if (!DialogResult.HasValue)
                 {
                     var result = MessageBox.Show(Strings.Get($"Do you want to save profiles?"), ComponentContainer.MessageBoxTitle, MessageBoxButton.YesNo);

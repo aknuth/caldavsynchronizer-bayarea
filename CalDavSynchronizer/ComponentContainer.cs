@@ -619,6 +619,7 @@ namespace CalDavSynchronizer
             _currentVisibleOptionsFormOrNull = viewModel;
 
             viewModel.SetOptionsCollection(options, initialSelectedProfileId);
+            viewModel.RememberInitialState();
 
             if (_uiService.ShowOptions(viewModel))
             {
