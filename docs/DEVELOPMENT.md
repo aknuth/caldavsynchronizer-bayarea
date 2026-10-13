@@ -354,3 +354,4 @@ never in the repository. To build on another machine, import the `.pfx` into
 | 2026-10-08 | recipient on the same server, after the server change | exactly one invitation, exactly one reply back |
 | 2026-10-06 | automatic setup | own calendar and address book on default folders, shared calendar as read-only subfolder named after its owner |
 | 2026-10-06 | installer | no trust prompt, add-in not disabled after several restarts |
+| 2026-10-13 | automatic setup, global contact list | `info@haiky.app`: calendar, own address book and the company list `customers` (display name, not `gal-customers`) as a real contacts subfolder; contacts synced |
