@@ -47,7 +47,9 @@ The installer adds two entries for the installing Windows user:
   - the own calendar on the account's *Calendar* folder,
   - the own address book on *Contacts*,
   - shared calendars as subfolders named after their owner, read only if
-    shared read only.
+    shared read only,
+  - global contact lists of the company as subfolders of *Contacts*, named
+    as on the server (for example `customers`), read only if the list is.
 - [ ] Click **Synchronize now** and wait for the progress window to finish.
 - [ ] Shared calendars appear under *My Calendars*. Tick them to show them.
 
@@ -70,7 +72,9 @@ The installer adds two entries for the installing Windows user:
 | --- | --- |
 | Ribbon tab missing, *"add-in disabled"* bar | *File → Options → Add-ins → Manage COM Add-ins*: enable *CalDavSynchronizer*. Or in *Slow and Disabled Add-ins* choose *Always enable this add-in*. |
 | *Set up calendars*: "no IMAP password stored" | Open the account settings, enter the password and check *Remember password*. |
+| *Set up calendars*: "server name ... not found in DNS" | The CNAME `dav.<mail domain>` is missing. |
 | *Set up calendars* finds nothing | Check that `https://dav.<mail domain>/` is reachable and the mail password is correct. |
+| Profile named *... (removed on server)*, deactivated | The calendar or list was deleted on the server. The Outlook folder keeps the last copy; delete profile and folder when no longer needed. |
 | Responses to invitations don't update the meeting | The account's data file is not the default (step 1). |
 | Invitation arrives twice | The meeting was sent from a folder whose profile still has *Set SCHEDULE-AGENT=CLIENT* on. Run *Set up calendars* or switch it off in the profile's *Event Mapping Configuration*. |
 | Anything else | *CalDav Synchronizer → Reports* for the last synchronization runs. The log is `%LOCALAPPDATA%\CalDavSynchronizer\log.txt` (lines starting with `ItemSend:` are from sending meetings). |

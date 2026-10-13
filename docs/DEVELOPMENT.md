@@ -159,7 +159,10 @@ to a button to avoid network access at startup.
 
 **Accounts and login.** Each IMAP account in Outlook is set up against
 `https://dav.<domain>/`. The login is the mail address with the IMAP password
-stored in Outlook.
+stored in Outlook. The host `dav.<domain>` is a CNAME on the server; DNS SRV
+records (RFC 6764) are not used, since they would be one more entry per domain
+to forget on a move. If the host doesn't resolve, the summary says so instead
+of "nothing found". Accounts that are not IMAP are listed as skipped.
 
 **Which folder a collection gets:**
 
@@ -168,18 +171,27 @@ stored in Outlook.
 - All other collections become subfolders of these.
   - Shared ones are named after the owner's local part, for example
     `accounting`, with `owner - name` when the collection has a specific name.
+  - Global contact lists of the company (`gal-<name>` on the server) have no
+    owner and are named after their display name, for example `customers`.
   - Dots become spaces: Outlook refused *Cannot create the folder* for
     `accounting@bayarea-cc.com` in the IMAP store, probably because of the IMAP
     hierarchy delimiter.
 
-**Sync mode.** Writable collections sync both ways with change-triggered sync.
-Read-only ones sync server to Outlook only.
+**Sync mode.** Taken from `{DAV:}current-user-privilege-set`, never guessed
+from the name. Writable collections sync both ways with change-triggered sync.
+Read-only ones (no write privilege) sync server to Outlook only.
+
+**No separate .pst.** Subfolders are created through the Outlook object model
+with a fixed folder type, which gives a real calendar or contacts folder even in
+an IMAP store. Only Outlook's *New Folder* dialog turns them into mail folders.
 
 **Matching and updates.** Profiles are matched by URL, and profiles created
 by hand are never changed.
 
-- A collection that disappeared from the server gets its profile deactivated.
-  The folder is kept.
+- A collection that disappeared from the server gets its profile deactivated
+  and ` (removed on server)` appended to its name, so nobody re-enables it
+  without knowing why. The folder is kept: it may be the last copy of the
+  data. If the collection comes back, the profile is reactivated and renamed.
 - If nothing is found (server unreachable, login rejected), nothing changes.
 - If one folder can't be created, only that collection is skipped and
   reported.

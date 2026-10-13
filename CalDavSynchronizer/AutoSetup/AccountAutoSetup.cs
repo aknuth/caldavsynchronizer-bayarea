@@ -18,6 +18,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -50,6 +52,12 @@ namespace CalDavSynchronizer.AutoSetup
 
         private const string DefaultCollectionName = "default";
 
+        /// <summary>
+        /// Appended to the name of a profile whose collection is gone from the server, so that whoever finds the
+        /// deactivated profile sees why. Removed again if the collection comes back.
+        /// </summary>
+        private const string RemovedOnServerSuffix = " (removed on server)";
+
         private readonly NameSpace _session;
         private readonly IOutlookAccountPasswordProvider _passwordProvider;
         private readonly GenericProfile _profileType = new GenericProfile();
@@ -69,10 +77,13 @@ namespace CalDavSynchronizer.AutoSetup
 
             foreach (var account in _session.Accounts.ToSafeEnumerable<Account>())
             {
-                if (account.AccountType != OlAccountType.olImap)
-                    continue;
-
                 var accountName = account.DisplayName;
+                if (account.AccountType != OlAccountType.olImap)
+                {
+                    report.Add($"{accountName}: not an IMAP account, skipped.");
+                    continue;
+                }
+
                 try
                 {
                     changed |= await SetUpAccount(account, options, generalOptions, report);
@@ -108,6 +119,18 @@ namespace CalDavSynchronizer.AutoSetup
             }
 
             var serverUrl = new Uri($"https://dav.{emailAddress.Substring(atIndex + 1)}/");
+            try
+            {
+                await Dns.GetHostAddressesAsync(serverUrl.Host);
+            }
+            catch (SocketException x)
+            {
+                // Say so explicitly, a missing DNS entry is easily mistaken for "nothing found".
+                s_logger.Warn($"AutoSetup: '{serverUrl.Host}' does not resolve, account '{accountName}' skipped.", x);
+                report.Add($"{emailAddress}: server name '{serverUrl.Host}' not found in DNS, skipped. Check the DNS entry (CNAME) of the domain.");
+                return false;
+            }
+
             var webDavClient = SynchronizerFactory.CreateWebDavClient(
                 emailAddress,
                 password,
@@ -201,6 +224,8 @@ namespace CalDavSynchronizer.AutoSetup
                         s_logger.Info($"AutoSetup: updating profile '{existing.Name}'.");
                         report.Add($"  {(existing.Inactive ? "reactivated" : "updated")}: {existing.Name}");
                         existing.Inactive = false;
+                        if (existing.Name.EndsWith(RemovedOnServerSuffix))
+                            existing.Name = existing.Name.Substring(0, existing.Name.Length - RemovedOnServerSuffix.Length);
                         existing.SynchronizationMode = synchronizationMode;
                         existing.EnableChangeTriggeredSynchronization = collection.IsWritable;
                         changed = true;
@@ -268,6 +293,8 @@ namespace CalDavSynchronizer.AutoSetup
                 // Keep the folder, the user may have stored something in it.
                 s_logger.Info($"AutoSetup: '{gone.CalenderUrl}' no longer on the server, deactivating profile '{gone.Name}'.");
                 gone.Inactive = true;
+                if (!gone.Name.EndsWith(RemovedOnServerSuffix))
+                    gone.Name += RemovedOnServerSuffix;
                 report.Add($"  deactivated (no longer on the server): {gone.Name}");
                 changed = true;
             }
