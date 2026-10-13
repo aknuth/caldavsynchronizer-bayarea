@@ -241,7 +241,7 @@ would have offered its release. *Check for Updates* in About reads
 `https://download.bayarea-cc.com/caldavsynchronizer/latest.json`:
 
 ```json
-{ "version": "5.0.1", "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.0.1.zip", "notes": "optional" }
+{ "version": "5.0.1", "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.1.0.zip", "notes": "optional" }
 ```
 
 If that version is newer than the installed one, it offers to open the
@@ -322,18 +322,18 @@ never in the repository. To build on another machine, import the `.pfx` into
    only the bootstrapper: it checks the prerequisites and runs the `.msi`
    next to it.
    ```powershell
-   Compress-Archive -Path CalDavSynchronizer.Setup\Release\setup.exe, CalDavSynchronizer.Setup\Release\CalDavSynchronizer.Setup.msi -DestinationPath CalDavSynchronizer-BayArea-5.0.1.zip
+   Compress-Archive -Path CalDavSynchronizer.Setup\Release\setup.exe, CalDavSynchronizer.Setup\Release\CalDavSynchronizer.Setup.msi -DestinationPath CalDavSynchronizer-BayArea-5.1.0.zip
    ```
    Upload the zip to `https://download.bayarea-cc.com/caldavsynchronizer/`,
    for example with the OpenSSH client built into Windows:
    ```powershell
-   scp CalDavSynchronizer-BayArea-5.0.1.zip release\latest.json <user>@<download server>:<download directory>/caldavsynchronizer/
+   scp CalDavSynchronizer-BayArea-5.1.0.zip release\latest.json <user>@<download server>:<download directory>/caldavsynchronizer/
    ```
    The version in the name keeps browsers and proxies from serving an old
    cached file.
 5. Update `latest.json` there (`url` pointing to the new zip). Upload the zip
    first, so `latest.json` never points to a missing file.
-6. Commit, tag (`v5.0.1`), push. The AGPL requires the source of every
+6. Commit, tag (`v5.1.0`), push. The AGPL requires the source of every
    released version to be available.
 
 ## 9. Test log
