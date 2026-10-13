@@ -312,6 +312,8 @@ never in the repository. To build on another machine, import the `.pfx` into
 
 ## 8. Release process
 
+Short version with the update check: [UPDATES.md](UPDATES.md).
+
 1. Raise the version:
    - the setup's `ProductVersion` (answer *Yes* when Visual Studio asks to
      change the ProductCode)
