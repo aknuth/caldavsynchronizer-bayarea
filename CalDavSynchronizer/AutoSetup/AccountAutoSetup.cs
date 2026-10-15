@@ -58,6 +58,12 @@ namespace CalDavSynchronizer.AutoSetup
         /// </summary>
         private const string RemovedOnServerSuffix = " (removed on server)";
 
+        /// <summary>
+        /// Appended to the name of a profile whose Outlook account is gone. Its folder was in the account's data file,
+        /// so if the account is added again, the profile is replaced by a new one with the new folder.
+        /// </summary>
+        private const string AccountRemovedSuffix = " (account removed)";
+
         private readonly NameSpace _session;
         private readonly IOutlookAccountPasswordProvider _passwordProvider;
         private readonly GenericProfile _profileType = new GenericProfile();
@@ -74,10 +80,13 @@ namespace CalDavSynchronizer.AutoSetup
         {
             var options = currentOptions.ToList();
             var changed = false;
+            var accountEmailAddresses = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var account in _session.Accounts.ToSafeEnumerable<Account>())
             {
                 var accountName = account.DisplayName;
+                if (!string.IsNullOrEmpty(account.SmtpAddress))
+                    accountEmailAddresses.Add(account.SmtpAddress);
                 if (account.AccountType != OlAccountType.olImap)
                 {
                     report.Add($"{accountName}: not an IMAP account, skipped.");
@@ -92,6 +101,20 @@ namespace CalDavSynchronizer.AutoSetup
                 {
                     s_logger.Error("AutoSetup: error setting up account, profiles of this account stay as they are.", x);
                     report.Add($"{accountName}: {x.Message}");
+                }
+            }
+
+            // Without any account something is wrong with the session, so better leave the profiles alone.
+            if (accountEmailAddresses.Count > 0)
+            {
+                foreach (var orphan in options.Where(o => o.IsAutoConfigured && !o.Inactive && !accountEmailAddresses.Contains(o.EmailAddress ?? string.Empty)))
+                {
+                    s_logger.Info($"AutoSetup: no Outlook account '{orphan.EmailAddress}' any more, deactivating profile '{orphan.Name}'.");
+                    orphan.Inactive = true;
+                    if (!orphan.Name.EndsWith(AccountRemovedSuffix))
+                        orphan.Name += AccountRemovedSuffix;
+                    report.Add($"{orphan.EmailAddress}: account removed from Outlook, deactivated: {orphan.Name}");
+                    changed = true;
                 }
             }
 
@@ -217,6 +240,16 @@ namespace CalDavSynchronizer.AutoSetup
                 var synchronizationMode = collection.IsWritable ? SynchronizationMode.MergeInBothDirections : SynchronizationMode.ReplicateServerIntoOutlook;
 
                 var existing = options.FirstOrDefault(o => NormalizeUrl(o.CalenderUrl) == NormalizeUrl(collection.Uri.ToString()));
+                if (existing != null && existing.IsAutoConfigured && existing.Name.EndsWith(AccountRemovedSuffix))
+                {
+                    // The account was added again, with a new data file. Replace the profile, its folder is gone.
+                    s_logger.Info($"AutoSetup: account is back, replacing profile '{existing.Name}'.");
+                    report.Add($"  replaced: {existing.Name}");
+                    options.Remove(existing);
+                    existing = null;
+                    changed = true;
+                }
+
                 if (existing != null)
                 {
                     if (existing.IsAutoConfigured && (existing.Inactive || existing.SynchronizationMode != synchronizationMode))
