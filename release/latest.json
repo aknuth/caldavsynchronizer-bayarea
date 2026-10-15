@@ -1,5 +1,5 @@
 {
-  "version": "5.1.0",
-  "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.1.0.zip",
-  "notes": "Set up calendars also sets up the company's global contact lists, says when the server name is missing in DNS, and marks profiles whose calendar or list was removed on the server."
+  "version": "5.1.1",
+  "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.1.1.zip",
+  "notes": "A meeting copied twice into one calendar (an invitation between two accounts in the same Outlook) is now a warning instead of an error. Set up calendars deactivates profiles of mail accounts removed from Outlook."
 }

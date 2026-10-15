@@ -201,6 +201,10 @@ by hand are never changed.
   and ` (removed on server)` appended to its name, so nobody re-enables it
   without knowing why. The folder is kept: it may be the last copy of the
   data. If the collection comes back, the profile is reactivated and renamed.
+- A profile whose Outlook account is gone (matched by the account's SMTP
+  address) is deactivated and gets ` (account removed)` appended; its folder
+  was in the account's data file. If the account is added again, the profile
+  is replaced by a new one pointing to the new data file.
 - If nothing is found (server unreachable, login rejected), nothing changes.
 - If one folder can't be created, only that collection is skipped and
   reported.
@@ -250,7 +254,7 @@ would have offered its release. *Check for Updates* in About reads
 `https://download.bayarea-cc.com/caldavsynchronizer/latest.json`:
 
 ```json
-{ "version": "5.0.1", "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.1.0.zip", "notes": "optional" }
+{ "version": "5.0.1", "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.1.1.zip", "notes": "optional" }
 ```
 
 If that version is newer than the installed one, it offers to open the
@@ -333,18 +337,18 @@ Short version with the update check: [UPDATES.md](UPDATES.md).
    only the bootstrapper: it checks the prerequisites and runs the `.msi`
    next to it.
    ```powershell
-   Compress-Archive -Path CalDavSynchronizer.Setup\Release\setup.exe, CalDavSynchronizer.Setup\Release\CalDavSynchronizer.Setup.msi -DestinationPath CalDavSynchronizer-BayArea-5.1.0.zip
+   Compress-Archive -Path CalDavSynchronizer.Setup\Release\setup.exe, CalDavSynchronizer.Setup\Release\CalDavSynchronizer.Setup.msi -DestinationPath CalDavSynchronizer-BayArea-5.1.1.zip
    ```
    Upload the zip to `https://download.bayarea-cc.com/caldavsynchronizer/`,
    for example with the OpenSSH client built into Windows:
    ```powershell
-   scp CalDavSynchronizer-BayArea-5.1.0.zip release\latest.json <user>@<download server>:<download directory>/caldavsynchronizer/
+   scp CalDavSynchronizer-BayArea-5.1.1.zip release\latest.json <user>@<download server>:<download directory>/caldavsynchronizer/
    ```
    The version in the name keeps browsers and proxies from serving an old
    cached file.
 5. Update `latest.json` there (`url` pointing to the new zip). Upload the zip
    first, so `latest.json` never points to a missing file.
-6. Commit, tag (`v5.1.0`), push. The AGPL requires the source of every
+6. Commit, tag (`v5.1.1`), push. The AGPL requires the source of every
    released version to be available.
 
 ## 9. Test log
