@@ -130,6 +130,15 @@ New events then get resource names like `040000008200E000...ics`
 - **Outlook may disable the add-in for slow startup.** This is VSTO and .NET
   load time, not the add-in's own code. The installer adds the add-in to
   `DoNotDisableAddinList` (section 7).
+- **Invitations between two accounts of the same Outlook give two copies.**
+  Outlook puts meeting requests for any IMAP account into the calendar of the
+  default data file, next to the organizer's copy and with the same UID
+  (GlobalAppointmentID). The upload of the second copy fails with `412
+  Precondition Failed` (`If-None-Match: *`, the resource `<UID>.ics` exists).
+  The add-in then fetches the existing resource; with the same UID it doesn't
+  overwrite it and reports a warning instead of an error (no popup with the
+  default report settings). The warning repeats on every run until one copy is
+  deleted in Outlook. With a different UID it stays an error.
 
 ## 4. Server requirements (sabre/dav)
 
@@ -356,4 +365,5 @@ Short version with the update check: [UPDATES.md](UPDATES.md).
 | 2026-10-08 | recipient on the same server, after the server change | exactly one invitation, exactly one reply back |
 | 2026-10-06 | automatic setup | own calendar and address book on default folders, shared calendar as read-only subfolder named after its owner |
 | 2026-10-06 | installer | no trust prompt, add-in not disabled after several restarts |
+| 2026-10-15 | 412 on *Synchronize now* | attendee copy of an invitation from `andreas.knuth@` to `info@haiky.app` (same Outlook) in the organizer's calendar, same UID as the organizer copy; now a warning instead of an error |
 | 2026-10-13 | automatic setup, global contact list | `info@haiky.app`: calendar, own address book and the company list `customers` (display name, not `gal-customers`) as a real contacts subfolder; contacts synced |

@@ -621,9 +621,21 @@ namespace CalDavSynchronizer.DataAccess
             return GetVersions(range, "VTODO");
         }
 
-        public Task<EntityVersion<WebResourceName, string>> CreateEntity(string iCalData, string name)
+        public async Task<EntityVersion<WebResourceName, string>> CreateEntity(string iCalData, string name)
         {
-            return CreateNewEntity(string.Format("{0:D}.ics", name), iCalData);
+            var fileName = string.Format("{0:D}.ics", name);
+            try
+            {
+                return await CreateNewEntity(fileName, iCalData);
+            }
+            catch (WebDavClientException x) when (x.StatusCode == HttpStatusCode.PreconditionFailed)
+            {
+                // If-None-Match: * failed, so the resource exists. The caller decides whether that is the same entity.
+                var existing = await GetEntities(new[] {new WebResourceName(new Uri(_serverUrl, fileName))});
+                if (existing.Count == 0)
+                    throw;
+                throw new ResourceAlreadyExistsException(existing[0].Entity, x);
+            }
         }
 
         protected async Task<EntityVersion<WebResourceName, string>> CreateNewEntity(string name, string content)

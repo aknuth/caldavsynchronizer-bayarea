@@ -57,6 +57,10 @@ namespace GenSync.EntityRepositories
                     var result = await _inner.Create(job.InitializeEntity, context);
                     job.NotifyOperationSuceeded(result);
                 }
+                catch (EntityCreateSkippedException x)
+                {
+                    job.NotifyOperationSkipped(x.Message);
+                }
                 catch (Exception x)
                 {
                     if (_exceptionHandlingStrategy.DoesGracefullyAbortSynchronization(x))

@@ -267,6 +267,11 @@ namespace CalDavSynchronizer.IntegrationTests.Infrastructure
             {
                 Assert.Fail($"Creation of Entity failed: {errorMessage}");
             }
+
+            public void NotifyOperationSkipped(string warning)
+            {
+                Assert.Fail($"Creation of Entity skipped: {warning}");
+            }
         }
 
         class UpdateJob : IUpdateJob<TEntityId, TEntityVersion, TEntity>

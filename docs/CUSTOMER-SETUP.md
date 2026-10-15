@@ -76,6 +76,7 @@ The installer adds two entries for the installing Windows user:
 | *Set up calendars* finds nothing | Check that `https://dav.<mail domain>/` is reachable and the mail password is correct. |
 | Profile named *... (removed on server)*, deactivated | The calendar or list was deleted on the server. The Outlook folder keeps the last copy; delete profile and folder when no longer needed. |
 | Responses to invitations don't update the meeting | The account's data file is not the default (step 1). |
+| Report warning *"Not uploaded: ... is already on the server, with the same UID"* | An invitation between two accounts in this Outlook: the attendee's copy landed in the organizer's calendar. Delete the attendee's copy with *Don't send a response*. |
 | Invitation arrives twice | The meeting was sent from a folder whose profile still has *Set SCHEDULE-AGENT=CLIENT* on. Run *Set up calendars* or switch it off in the profile's *Event Mapping Configuration*. |
 | Anything else | *CalDav Synchronizer → Reports* for the last synchronization runs. The log is `%LOCALAPPDATA%\CalDavSynchronizer\log.txt` (lines starting with `ItemSend:` are from sending meetings). |
 

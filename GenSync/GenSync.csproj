@@ -82,6 +82,7 @@
     <Compile Include="Logging\SynchronizationOperation.cs" />
     <Compile Include="Utilities\ChunkedExecutor.cs" />
     <Compile Include="EntityRepositories\BatchEntityRepositoryAdapter.cs" />
+    <Compile Include="EntityRepositories\EntityCreateSkippedException.cs" />
     <Compile Include="EntityRepositories\ICreateJob.cs" />
     <Compile Include="EntityRepositories\IDeleteJob.cs" />
     <Compile Include="EntityRepositories\IdWithAwarenessLevel.cs" />

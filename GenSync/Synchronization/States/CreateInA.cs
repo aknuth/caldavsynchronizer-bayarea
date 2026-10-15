@@ -122,6 +122,12 @@ namespace GenSync.Synchronization.States
             stateContext.SetState(CreateFailed());
         }
 
+        private void NotifyOperationSkipped(IEntitySyncStateContext<TAtypeEntityId, TAtypeEntityVersion, TAtypeEntity, TBtypeEntityId, TBtypeEntityVersion, TBtypeEntity, TContext> stateContext, string warning, IEntitySynchronizationLogger<TAtypeEntityId, TAtypeEntity, TBtypeEntityId, TBtypeEntity> logger)
+        {
+            logger.LogWarning(warning);
+            stateContext.SetState(CreateFailed());
+        }
+
         public override IEntitySyncState<TAtypeEntityId, TAtypeEntityVersion, TAtypeEntity, TBtypeEntityId, TBtypeEntityVersion, TBtypeEntity, TContext> NotifyJobExecuted()
         {
             _loggerOrNull?.LogWarning($"State '{GetType().Name}' was not left. Defaulting to failed state.");
@@ -181,6 +187,11 @@ namespace GenSync.Synchronization.States
             public void NotifyOperationFailed(string errorMessage)
             {
                 _state.NotifyOperationFailed(_stateContext, errorMessage, _logger);
+            }
+
+            public void NotifyOperationSkipped(string warning)
+            {
+                _state.NotifyOperationSkipped(_stateContext, warning, _logger);
             }
         }
     }

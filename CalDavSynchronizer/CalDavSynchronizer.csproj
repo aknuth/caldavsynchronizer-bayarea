@@ -472,6 +472,7 @@
     <Compile Include="DataAccess\ReportAddedEventArgs.cs" />
     <Compile Include="DataAccess\ReportEventArgs.cs" />
     <Compile Include="DataAccess\SynchronizationReportRepository.cs" />
+    <Compile Include="DataAccess\ResourceAlreadyExistsException.cs" />
     <Compile Include="DataAccess\WebDavClientException.cs" />
     <Compile Include="DataAccess\WebDavDataAccess.cs" />
     <Compile Include="DataAccess\CardDavDataAccess.cs" />

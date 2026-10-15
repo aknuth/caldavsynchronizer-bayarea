@@ -261,7 +261,39 @@ namespace CalDavSynchronizer.Implementation
                 var uid = newCalendar.Events.Count > 0 ? newCalendar.Events[0].UID : newCalendar.Todos[0].UID;
                 const int maximumNameLength = 255;
                 var name = uid.Length <= maximumNameLength ? uid : Guid.NewGuid().ToString();
-                return await _calDavDataAccess.CreateEntity(SerializeCalendar(newCalendar), name);
+                try
+                {
+                    return await _calDavDataAccess.CreateEntity(SerializeCalendar(newCalendar), name);
+                }
+                catch (ResourceAlreadyExistsException x)
+                {
+                    IICalendar existingCalendar;
+                    try
+                    {
+                        existingCalendar = DeserializeCalendar(x.ExistingContent, _calendarSerializer);
+                    }
+                    catch (Exception deserializationException)
+                    {
+                        s_logger.Error("Could not deserialize the existing resource.", deserializationException);
+                        throw x;
+                    }
+
+                    var existingUid = existingCalendar.Events.Count > 0 ? existingCalendar.Events[0].UID : existingCalendar.Todos.FirstOrDefault()?.UID;
+                    if (existingUid != uid)
+                        throw;
+
+                    // Typically an invitation between two accounts of the same Outlook profile: Outlook puts the
+                    // attendee's copy into the default calendar next to the organizer's copy, both with the same UID.
+                    // Uploading it would overwrite the organizer's copy, so leave it in Outlook and just warn.
+                    var description = newCalendar.Events.Count > 0
+                        ? $"'{newCalendar.Events[0].Summary}' on {newCalendar.Events[0].Start?.Value:g}"
+                        : $"'{newCalendar.Todos[0].Summary}'";
+                    s_logger.Warn($"Not creating {description}, the server already has an entity with UID '{uid}'.");
+                    throw new EntityCreateSkippedException(
+                        $"Not uploaded: {description} is already on the server, with the same UID. " +
+                        "This Outlook item is a second copy of it, usually an invitation between two accounts in this Outlook " +
+                        "that Outlook put into this calendar. Delete the copy you don't need (choose 'Don't send a response').");
+                }
             }
         }
 
