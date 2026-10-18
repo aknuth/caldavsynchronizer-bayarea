@@ -27,7 +27,8 @@ The background update check of the original add-in is switched off.
 
 ## Download page for the first installation
 
-`https://download.bayarea-cc.com/caldavsynchronizer/` shows `release/index.html`
+`https://download.bayarea-cc.com/caldavsynchronizer/index.html` (the directory
+itself redirects to the homepage) is `release/index.html`
 with `release/logo.png`. The page reads `latest.json` too, so its download
 button always offers the current zip. Upload both files once, and again only
 when the page itself changes:

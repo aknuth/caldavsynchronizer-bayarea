@@ -26,7 +26,7 @@ Setting up CalDavSynchronizer (Bay Area Edition) on a customer's PC.
 ## 2. Install
 
 - [ ] Download `CalDavSynchronizer-BayArea-<version>.zip` from
-      `https://download.bayarea-cc.com/caldavsynchronizer/` and unzip it.
+      `https://download.bayarea-cc.com/caldavsynchronizer/index.html` and unzip it.
 - [ ] Run `setup.exe` (not only the `.msi`). It installs .NET Framework 4.8 and
       the Office runtime first, if missing.
 - [ ] Choose **Just me**.

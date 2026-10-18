@@ -7,6 +7,8 @@ by Gerhard Zehetbauer and Alexander Nimmervoll, adapted to a single kind of
 server: [sabre/dav](https://sabre.io/dav/) with server-side scheduling
 (RFC 6638), where users log in with their mail address and mail password.
 
+**Download:** https://download.bayarea-cc.com/caldavsynchronizer/index.html
+
 ## What is different from the original
 
 - **The server sends meeting invitations, not Outlook.** When you send a

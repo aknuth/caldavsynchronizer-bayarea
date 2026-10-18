@@ -84,7 +84,7 @@
   <section>
     <h2>Download</h2>
     <div class="download">
-      <a id="download" class="button" href="./">Download</a>
+      <a id="download" class="button" href="mailto:support@bayarea-cc.com">Download</a>
       <span id="version" class="version">Loading the current version&hellip;</span>
     </div>
     <p id="notes" class="notes"></p>
@@ -135,7 +135,8 @@
         notes.textContent = latest.notes || "";
       })
       .catch(function () {
-        version.textContent = "Couldn't load the current version. The button opens the list of all files.";
+        version.textContent = "Couldn't load the current version. Please contact support.";
+        link.textContent = "Contact support";
       });
   })();
 </script>
