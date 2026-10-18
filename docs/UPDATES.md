@@ -25,6 +25,17 @@ There is no automatic update. The user clicks **About → Check for updates**.
 The address of `latest.json` is `WebResourceUrls.SiteContainingNewestVersion`.
 The background update check of the original add-in is switched off.
 
+## Download page for the first installation
+
+`https://download.bayarea-cc.com/caldavsynchronizer/` shows `release/index.html`
+with `release/logo.png`. The page reads `latest.json` too, so its download
+button always offers the current zip. Upload both files once, and again only
+when the page itself changes:
+
+```powershell
+scp release\index.html release\logo.png <user>@<download server>:<download directory>/caldavsynchronizer/
+```
+
 ## Releasing a new version
 
 | Step | Who | Where |
