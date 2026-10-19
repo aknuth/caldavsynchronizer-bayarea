@@ -297,7 +297,7 @@ namespace CalDavSynchronizer.Implementation.Events
 
             if (_configuration.MapAttendees)
             {
-                var organizerSet = await MapAttendees1To2(source, target, logger, scheduleAgentClient);
+                var organizerSet = await MapAttendees1To2(source, target, logger, scheduleAgentClient, existingTargetEventOrNull);
                 if (!organizerSet)
                     MapOrganizer1To2(source, target, logger, scheduleAgentClient);
             }
@@ -642,6 +642,15 @@ namespace CalDavSynchronizer.Implementation.Events
                     target.ReminderSet = false;
                 }
             }
+        }
+
+        private static string GetParticipationStatusOrNull(IEvent eventOrNull, Uri attendeeAddressOrNull)
+        {
+            if (eventOrNull == null || attendeeAddressOrNull == null)
+                return null;
+
+            var existingAttendee = eventOrNull.Attendees.FirstOrDefault(a => a.Value != null && string.Equals(a.Value.ToString(), attendeeAddressOrNull.ToString(), StringComparison.OrdinalIgnoreCase));
+            return string.IsNullOrEmpty(existingAttendee?.ParticipationStatus) ? null : existingAttendee.ParticipationStatus;
         }
 
         private string MapParticipation1To2(OlResponseStatus value)
@@ -1450,7 +1459,7 @@ namespace CalDavSynchronizer.Implementation.Events
             }
         }
 
-        private async Task<bool> MapAttendees1To2(AppointmentItem source, IEvent target, IEntitySynchronizationLogger logger, bool scheduleAgentClient)
+        private async Task<bool> MapAttendees1To2(AppointmentItem source, IEvent target, IEntitySynchronizationLogger logger, bool scheduleAgentClient, IEvent existingTargetEventOrNull)
         {
             var organizerSet = false;
             var ownAttendeeSet = false;
@@ -1522,6 +1531,10 @@ namespace CalDavSynchronizer.Implementation.Events
                     }
 
                     attendee.ParticipationStatus = MapParticipation1To2(recipient.MeetingResponseStatus);
+                    // Outlook knows only responses it applied itself (from mails, and only in the default calendar). A
+                    // response the server entered (REPLY) must not be reset by the next upload.
+                    if (attendee.ParticipationStatus == "NEEDS-ACTION")
+                        attendee.ParticipationStatus = GetParticipationStatusOrNull(existingTargetEventOrNull, attendee.Value) ?? attendee.ParticipationStatus;
                     attendee.CommonName = nameWithoutEmail;
                     attendee.Role = MapAttendeeType1To2((OlMeetingRecipientType) recipient.Type);
 
@@ -2055,50 +2068,6 @@ namespace CalDavSynchronizer.Implementation.Events
             }
         }
 
-        private const string PR_RECIPIENT_TRACKSTATUS = "http://schemas.microsoft.com/mapi/proptag/0x5FFF0003";
-
-        /// <summary>
-        /// Shows the attendee's PARTSTAT from the server in the organizer's tracking. Outlook only applies responses it
-        /// finds in the default calendar; responses the server enters into the organizer's event (also in a shared
-        /// calendar) would stay invisible otherwise, and the next upload would reset them to "no response".
-        /// </summary>
-        private static void MapTrackStatus2To1(IAttendee attendee, Recipient targetRecipient, AppointmentItem target)
-        {
-            if (target.MeetingStatus != OlMeetingStatus.olMeeting && target.MeetingStatus != OlMeetingStatus.olMeetingCanceled)
-                return;
-
-            OlResponseStatus trackStatus;
-            switch (attendee.ParticipationStatus?.ToUpperInvariant())
-            {
-                case "ACCEPTED":
-                    trackStatus = OlResponseStatus.olResponseAccepted;
-                    break;
-                case "TENTATIVE":
-                    trackStatus = OlResponseStatus.olResponseTentative;
-                    break;
-                case "DECLINED":
-                    trackStatus = OlResponseStatus.olResponseDeclined;
-                    break;
-                default:
-                    return;
-            }
-
-            if (targetRecipient.MeetingResponseStatus == trackStatus)
-                return;
-
-            try
-            {
-                using (var propertyAccessor = GenericComObjectWrapper.Create(targetRecipient.PropertyAccessor))
-                {
-                    propertyAccessor.Inner.SetProperty(PR_RECIPIENT_TRACKSTATUS, (int) trackStatus);
-                }
-            }
-            catch (System.Exception x)
-            {
-                s_logger.Warn($"Could not set the response status of '{targetRecipient.Address}' to {trackStatus}.", x);
-            }
-        }
-
         private void MapAttendeesAndOrganizer2To1(IEvent source, AppointmentItem target, IEntitySynchronizationLogger logger)
         {
             var recipientsToDispose = new HashSet<Recipient>();
@@ -2179,7 +2148,6 @@ namespace CalDavSynchronizer.Implementation.Events
                         if (attendee.Type == "RESOURCE" || attendee.Type == "ROOM")
                             targetRecipient.Type = (int) OlMeetingRecipientType.olResource;
                         targetRecipient.Resolve();
-                        MapTrackStatus2To1(attendee, targetRecipient, target);
                     }
                 }
 

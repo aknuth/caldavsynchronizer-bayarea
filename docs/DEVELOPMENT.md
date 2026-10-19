@@ -93,10 +93,12 @@ marked and the server stays silent too.
 **Responses in the organizer's Outlook:** Outlook applies a response mail only
 to a meeting in the default calendar; for one in a shared calendar it shows
 *"We couldn't find this meeting in the calendar"*. The server enters the
-`REPLY` into the organizer's event, and the mapper copies each attendee's
-`PARTSTAT` into Outlook's tracking (`PR_RECIPIENT_TRACKSTATUS` of the
-recipient) for meetings the user organizes. Without that, the next upload of
-the meeting would also reset the attendees to "no response".
+`REPLY` into the organizer's event, but Outlook's *Tracking* page doesn't
+show it: `PR_RECIPIENT_TRACKSTATUS` can't be set through the object model
+(`0x80040102`, tried 2026-10-19); only Extended MAPI (`IMessage::ModifyRecipients`)
+could. The organizer sees the response in the server's mail. So that the next
+upload doesn't reset it, an attendee Outlook shows without response keeps the
+`PARTSTAT` of the event on the server.
 
 **Response before the first synchronization:** an invitation from a user on
 the same server exists twice before the add-in knows either: as the copy the
