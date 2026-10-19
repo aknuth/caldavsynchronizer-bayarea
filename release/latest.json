@@ -1,5 +1,5 @@
 {
-  "version": "5.1.1",
-  "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.1.1.zip",
-  "notes": "A meeting copied twice into one calendar (an invitation between two accounts in the same Outlook) is now a warning instead of an error. Set up calendars deactivates profiles of mail accounts removed from Outlook."
+  "version": "5.2.0",
+  "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.2.0.zip",
+  "notes": "Accepting, tentatively accepting and declining invitations now goes through the server, like sending them. Reminders that are already due are shown while the meeting has not ended."
 }
