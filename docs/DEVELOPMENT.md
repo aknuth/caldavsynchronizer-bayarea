@@ -90,6 +90,14 @@ profile conditions:
 *Don't send a response* triggers no `ItemSend`, so the appointment is not
 marked and the server stays silent too.
 
+**Responses in the organizer's Outlook:** Outlook applies a response mail only
+to a meeting in the default calendar; for one in a shared calendar it shows
+*"We couldn't find this meeting in the calendar"*. The server enters the
+`REPLY` into the organizer's event, and the mapper copies each attendee's
+`PARTSTAT` into Outlook's tracking (`PR_RECIPIENT_TRACKSTATUS` of the
+recipient) for meetings the user organizes. Without that, the next upload of
+the meeting would also reset the attendees to "no response".
+
 **Response before the first synchronization:** an invitation from a user on
 the same server exists twice before the add-in knows either: as the copy the
 server delivered (`sabredav-<uuid>.ics`) and as the appointment Outlook made
