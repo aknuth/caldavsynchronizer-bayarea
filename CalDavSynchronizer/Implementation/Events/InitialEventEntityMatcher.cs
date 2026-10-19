@@ -84,6 +84,16 @@ namespace CalDavSynchronizer.Implementation.Events
             return false;
         }
 
+        /// <summary>
+        /// A meeting the send guard handed to the server (an invitation sent or a response given in Outlook) may be matched
+        /// with the copy the server delivered, before the synchronization knew either. Outlook's side has to be uploaded
+        /// then, otherwise the server never sees the response and sends no REPLY.
+        /// </summary>
+        protected override DateTime GetAtypeVersionForRelation(EventEntityMatchData atypeEntity, DateTime currentVersion)
+        {
+            return atypeEntity.IsServerScheduled ? DateTime.MinValue : currentVersion;
+        }
+
         protected override string GetAtypePropertyValue(EventEntityMatchData atypeEntity)
         {
             return atypeEntity.Subject?.ToLower() ?? string.Empty;

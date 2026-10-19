@@ -462,11 +462,24 @@ namespace GenSync.Synchronization
 
                 foreach (var knownEntityRelationData in matchingEntites)
                 {
+                    var currentAVersion = newAVersions[knownEntityRelationData.AtypeId];
                     newAVersions.Remove(knownEntityRelationData.AtypeId);
                     newBVersions.Remove(knownEntityRelationData.BtypeId);
-                    var entitySyncState = _initialSyncStateCreationStrategy.CreateFor_Unchanged_Unchanged(knownEntityRelationData);
+
+                    // The matcher may hand back another Atype version to have the Atype entity written to B right away.
+                    IEntitySyncState<TAtypeEntityId, TAtypeEntityVersion, TAtypeEntity, TBtypeEntityId, TBtypeEntityVersion, TBtypeEntity, TContext> entitySyncState;
+                    if (_atypeVersionComparer.Equals(knownEntityRelationData.AtypeVersion, currentAVersion))
+                    {
+                        entitySyncState = _initialSyncStateCreationStrategy.CreateFor_Unchanged_Unchanged(knownEntityRelationData);
+                        aDeltaLogInfo.IncUnchanged();
+                    }
+                    else
+                    {
+                        entitySyncState = _initialSyncStateCreationStrategy.CreateFor_Changed_Unchanged(knownEntityRelationData, currentAVersion);
+                        aDeltaLogInfo.IncChanged();
+                    }
+
                     entitySynchronizationContexts.Add(new EntitySyncStateContext<TAtypeEntityId, TAtypeEntityVersion, TAtypeEntity, TBtypeEntityId, TBtypeEntityVersion, TBtypeEntity, TContext>(entitySyncState));
-                    aDeltaLogInfo.IncUnchanged();
                     bDeltaLogInfo.IncUnchanged();
                 }
 

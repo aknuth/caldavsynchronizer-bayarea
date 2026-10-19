@@ -90,6 +90,17 @@ profile conditions:
 *Don't send a response* triggers no `ItemSend`, so the appointment is not
 marked and the server stays silent too.
 
+**Response before the first synchronization:** an invitation from a user on
+the same server exists twice before the add-in knows either: as the copy the
+server delivered (`sabredav-<uuid>.ics`) and as the appointment Outlook made
+from the mail. The synchronization pairs them by subject and time (initial
+entity matching), which normally counts both as unchanged, so the response
+was never uploaded (seen 2026-10-19). For an appointment with the marker,
+`InitialEventEntityMatcher` hands back a stale Outlook version, and the
+synchronizer then treats the Outlook side as changed and uploads it in the
+same run. The pairing itself stays: it prevents a second copy in Outlook and
+on the server.
+
 **Counter proposals stay with Outlook.** *Propose New Time* is sent as a
 tentative or negative response with `PidLidAppointmentCounterProposal` set.
 The uploaded appointment keeps the original time, so the proposal would be

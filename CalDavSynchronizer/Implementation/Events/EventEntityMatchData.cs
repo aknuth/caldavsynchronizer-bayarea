@@ -31,6 +31,7 @@ namespace CalDavSynchronizer.Implementation.Events
         public DateTime EndUtc { get; }
         public DateTime EndInEndTimeZone { get; }
         public DateTime StartInStartTimeZone { get; }
+        public bool IsServerScheduled { get; }
 
         public EventEntityMatchData(AppointmentItem appointment)
         {
@@ -42,6 +43,7 @@ namespace CalDavSynchronizer.Implementation.Events
             EndUtc = appointment.EndUTC;
             EndInEndTimeZone = appointment.EndInEndTimeZone;
             StartInStartTimeZone = appointment.StartInStartTimeZone;
+            IsServerScheduled = ServerSchedulingSendGuard.IsServerScheduled(appointment);
         }
     }
 }

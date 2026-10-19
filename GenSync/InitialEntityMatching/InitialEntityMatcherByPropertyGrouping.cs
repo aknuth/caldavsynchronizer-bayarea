@@ -76,7 +76,7 @@ namespace GenSync.InitialEntityMatching
                             {
                                 s_logger.DebugFormat("Found matching entities: '{0}' == '{1}'", atypeEntityId, btypeEntityId);
 
-                                foundRelations.Add(relationFactory.Create(atypeEntityId, atypeEntityVersions[atypeEntityId], btypeEntityId, btypeEntityVersions[btypeEntityId]));
+                                foundRelations.Add(relationFactory.Create(atypeEntityId, GetAtypeVersionForRelation(allAtypeEntities[atypeEntityId], atypeEntityVersions[atypeEntityId]), btypeEntityId, btypeEntityVersions[btypeEntityId]));
                                 // b has to be removed from the Group, because b is iterated in the inner loop an if an second match would occour this will lead to an exception
                                 // not required to remove a from the group, because in the aouter loop every group is just iterated once
                                 btypeEntityGroup.Remove(btypeEntityId);
@@ -96,6 +96,12 @@ namespace GenSync.InitialEntityMatching
         }
 
         protected abstract bool AreEqual(TAtypeEntity atypeEntity, TBtypeEntity btypeEntity);
+
+        /// <summary>
+        /// The Atype version stored in the relation of a match. Returning a different version than the current one makes
+        /// the synchronizer treat the Atype entity as changed, so it is written to the Btype repository right away.
+        /// </summary>
+        protected virtual TAtypeEntityVersion GetAtypeVersionForRelation(TAtypeEntity atypeEntity, TAtypeEntityVersion currentVersion) => currentVersion;
 
         protected abstract TAtypeProperty GetAtypePropertyValue(TAtypeEntity atypeEntity);
         protected abstract TBtypeProperty GetBtypePropertyValue(TBtypeEntity btypeEntity);
