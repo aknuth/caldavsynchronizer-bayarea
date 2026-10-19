@@ -58,6 +58,7 @@ namespace CalDavSynchronizer.Implementation
         private readonly IDateTimeRangeProvider _dateTimeRangeProvider;
         private readonly bool _deleteAndCreateOnUpdateError403;
         private readonly IEqualityComparer<string> _versionComparer;
+        private readonly string _userAddressInSharedCollectionOrNull;
 
 
         public CalDavRepository(
@@ -66,7 +67,8 @@ namespace CalDavSynchronizer.Implementation
             CalDavRepository.EntityType entityType,
             IDateTimeRangeProvider dateTimeRangeProvider,
             bool deleteAndCreateOnUpdateError403,
-            IEqualityComparer<string> versionComparer)
+            IEqualityComparer<string> versionComparer,
+            string userAddressInSharedCollectionOrNull = null)
         {
             if (versionComparer == null) throw new ArgumentNullException(nameof(versionComparer));
             _deleteAndCreateOnUpdateError403 = deleteAndCreateOnUpdateError403;
@@ -75,6 +77,7 @@ namespace CalDavSynchronizer.Implementation
             _calendarSerializer = calendarSerializer;
             _entityType = entityType;
             _dateTimeRangeProvider = dateTimeRangeProvider;
+            _userAddressInSharedCollectionOrNull = userAddressInSharedCollectionOrNull;
         }
 
         public async Task<IEnumerable<EntityVersion<WebResourceName, string>>> GetVersions(IEnumerable<IdWithAwarenessLevel<WebResourceName>> idsOfEntitiesToQuery, TContext context, IGetVersionsLogger logger)
@@ -208,8 +211,46 @@ namespace CalDavSynchronizer.Implementation
         {
             using (AutomaticStopwatch.StartDebug(s_logger))
             {
+                if (_userAddressInSharedCollectionOrNull != null && await IsMeetingOrganizedByOthers(entityId))
+                {
+                    // In a calendar shared by someone else, Outlook removes a meeting the user declines or deletes. On the
+                    // server that would delete it for everybody. Leave it there: the relation is dropped, so the next
+                    // synchronization brings it back to Outlook.
+                    s_logger.Info($"Not deleting '{entityId.OriginalAbsolutePath}': a meeting organized by someone else in a shared calendar.");
+                    logger.LogWarning("Not deleted on the server: a meeting organized by someone else, in a shared calendar. It comes back in Outlook with the next synchronization.");
+                    return true;
+                }
+
                 return await _calDavDataAccess.TryDeleteEntity(entityId, version);
             }
+        }
+
+        private async Task<bool> IsMeetingOrganizedByOthers(WebResourceName entityId)
+        {
+            var entities = await _calDavDataAccess.GetEntities(new[] {entityId});
+            if (entities.Count == 0)
+                return false;
+
+            IICalendar calendar;
+            try
+            {
+                calendar = DeserializeCalendar(entities[0].Entity, _calendarSerializer);
+            }
+            catch (Exception x)
+            {
+                s_logger.Error($"Could not deserialize '{entityId.OriginalAbsolutePath}', deleting it.", x);
+                return false;
+            }
+
+            var organizer = calendar.Events.FirstOrDefault()?.Organizer?.Value?.ToString();
+            if (string.IsNullOrEmpty(organizer))
+                return false;
+
+            const string mailtoPrefix = "mailto:";
+            if (organizer.StartsWith(mailtoPrefix, StringComparison.OrdinalIgnoreCase))
+                organizer = organizer.Substring(mailtoPrefix.Length);
+
+            return !string.Equals(organizer, _userAddressInSharedCollectionOrNull, StringComparison.OrdinalIgnoreCase);
         }
 
         public async Task<EntityVersion<WebResourceName, string>> TryUpdate(

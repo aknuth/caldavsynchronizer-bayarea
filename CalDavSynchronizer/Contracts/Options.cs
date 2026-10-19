@@ -37,6 +37,11 @@ namespace CalDavSynchronizer.Contracts
         public bool Inactive { get; set; }
         /// <summary>Created by AutoSetup.AccountAutoSetup, which may update or deactivate it.</summary>
         public bool IsAutoConfigured { get; set; }
+        /// <summary>
+        /// Set by AutoSetup.AccountAutoSetup for a calendar shared by someone else: the owner's address. Meetings organized
+        /// by others are not deleted on the server from such a calendar (Outlook removes a meeting when declining it).
+        /// </summary>
+        public string SharedCollectionOwner { get; set; }
         public string Name { get; set; }
         public Guid Id { get; set; }
         public string OutlookFolderEntryId { get; set; }

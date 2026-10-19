@@ -40,6 +40,7 @@ namespace CalDavSynchronizer.Ui.Options.Models
 
         private bool _isActive;
         private bool _isAutoConfigured;
+        private string _sharedCollectionOwner;
         private string _name;
 
         private bool _enableChangeTriggeredSynchronization;
@@ -316,6 +317,7 @@ namespace CalDavSynchronizer.Ui.Options.Models
             _name = data.Name;
             _isActive = !data.Inactive;
             _isAutoConfigured = data.IsAutoConfigured;
+            _sharedCollectionOwner = data.SharedCollectionOwner;
 
             _enableChangeTriggeredSynchronization = data.EnableChangeTriggeredSynchronization;
 
@@ -384,6 +386,7 @@ namespace CalDavSynchronizer.Ui.Options.Models
                 Name = Name,
                 Inactive = !IsActive,
                 IsAutoConfigured = _isAutoConfigured,
+                SharedCollectionOwner = _sharedCollectionOwner,
                 EnableChangeTriggeredSynchronization = _enableChangeTriggeredSynchronization,
                 OutlookFolderEntryId = _selectedFolderOrNull?.EntryId,
                 OutlookFolderStoreId = _selectedFolderOrNull?.StoreId,

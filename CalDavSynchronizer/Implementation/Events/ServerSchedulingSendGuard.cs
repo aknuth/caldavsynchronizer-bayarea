@@ -206,9 +206,22 @@ namespace CalDavSynchronizer.Implementation.Events
                 return;
             }
 
-            if (appointment.MeetingStatus != OlMeetingStatus.olMeetingReceived)
+            OlMeetingStatus meetingStatus;
+            try
             {
-                s_logger.Info($"ItemSend: response for '{appointment.Subject}' with meeting status {appointment.MeetingStatus}, Outlook sends.");
+                meetingStatus = appointment.MeetingStatus;
+            }
+            catch (COMException x) when (IsMovedOrDeleted(x))
+            {
+                // Declining or deleting from the calendar, Outlook removes the appointment before sending. Nothing is left
+                // to upload, so Outlook sends as before.
+                s_logger.Info($"ItemSend: appointment of response '{response.Subject}' already removed by Outlook, Outlook sends.");
+                return;
+            }
+
+            if (meetingStatus != OlMeetingStatus.olMeetingReceived)
+            {
+                s_logger.Info($"ItemSend: response for '{appointment.Subject}' with meeting status {meetingStatus}, Outlook sends.");
                 return;
             }
 
@@ -305,12 +318,14 @@ namespace CalDavSynchronizer.Implementation.Events
             {
                 return GetServerSchedulingProfileOrNull(appointment) != null;
             }
-            catch (COMException x) when (x.ErrorCode == unchecked((int) 0x8004010A))
+            catch (COMException x) when (IsMovedOrDeleted(x))
             {
-                // Moved or deleted
                 return false;
             }
         }
+
+        // "The item has been moved or deleted", seen with both codes.
+        private static bool IsMovedOrDeleted(COMException x) => x.ErrorCode == unchecked((int) 0x8004010A) || x.ErrorCode == unchecked((int) 0x8834010A);
 
         private void DeleteCancelledMeeting(AppointmentItem appointment, Inspector inspectorOrNull)
         {
@@ -323,7 +338,7 @@ namespace CalDavSynchronizer.Implementation.Events
                 appointment.Delete();
                 s_logger.Info("ItemSend: cancelled meeting deleted, server sends CANCEL.");
             }
-            catch (COMException x) when (x.ErrorCode == unchecked((int) 0x8004010A))
+            catch (COMException x) when (IsMovedOrDeleted(x))
             {
                 s_logger.Info("ItemSend: cancelled meeting already deleted by Outlook, server sends CANCEL.");
             }

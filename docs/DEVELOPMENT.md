@@ -97,6 +97,17 @@ lost, and sabre/dav's broker doesn't process `COUNTER` (`SCHEDULE-STATUS:
 5.0`). The organizer's *Accept Proposal* works as before for meetings in the
 default calendar.
 
+**Responding in a calendar shared by someone else:** there the attendee sees
+the organizer's event itself. Declining (or deleting) it, Outlook removes it
+before `ItemSend`, so the guard lets Outlook send the response. Without
+protection the synchronization would then delete the organizer's event on the
+server, for everybody. Profiles of such calendars therefore carry
+`SharedCollectionOwner` (set by *Set up calendars*), and `CalDavRepository`
+doesn't delete a meeting organized by someone else from them. It only drops
+the relation, so the next synchronization brings the event back to Outlook
+(report warning *"Not deleted on the server ..."*). Events without organizer
+and the user's own meetings are deleted as usual.
+
 **Decline:** if Outlook removes the appointment despite the cancelled send,
 the synchronization would only delete it on the server, where it still has
 `SCHEDULE-AGENT=CLIENT`, so no `REPLY`. The guard checks afterwards and in that

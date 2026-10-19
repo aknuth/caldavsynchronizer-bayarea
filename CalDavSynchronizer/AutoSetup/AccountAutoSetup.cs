@@ -252,6 +252,13 @@ namespace CalDavSynchronizer.AutoSetup
 
                 if (existing != null)
                 {
+                    if (existing.IsAutoConfigured && existing.SharedCollectionOwner != collection.OwnerEmailOrNull)
+                    {
+                        s_logger.Info($"AutoSetup: profile '{existing.Name}' belongs to '{collection.OwnerEmailOrNull ?? emailAddress}'.");
+                        existing.SharedCollectionOwner = collection.OwnerEmailOrNull;
+                        changed = true;
+                    }
+
                     if (existing.IsAutoConfigured && (existing.Inactive || existing.SynchronizationMode != synchronizationMode))
                     {
                         s_logger.Info($"AutoSetup: updating profile '{existing.Name}'.");
@@ -300,6 +307,7 @@ namespace CalDavSynchronizer.AutoSetup
                 newOptions.IsAutoConfigured = true;
                 newOptions.Name = isDefault ? $"{emailAddress} ({collection.Name})" : $"{emailAddress} - {displayName}";
                 newOptions.EmailAddress = emailAddress;
+                newOptions.SharedCollectionOwner = collection.OwnerEmailOrNull;
                 newOptions.UserName = emailAddress;
                 newOptions.UseAccountPassword = true;
                 newOptions.CalenderUrl = collection.Uri.ToString();

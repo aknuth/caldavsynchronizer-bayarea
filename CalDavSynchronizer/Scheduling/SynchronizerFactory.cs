@@ -380,7 +380,8 @@ namespace CalDavSynchronizer.Scheduling
                 CalDavRepository.EntityType.Event,
                 dateTimeRangeProvider,
                 false,
-                btypeVersionComparer);
+                btypeVersionComparer,
+                options.SharedCollectionOwner != null ? options.EmailAddress : null);
 
             componentsToFill.CalDavRepository = btypeRepository;
 
