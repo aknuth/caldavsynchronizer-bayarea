@@ -199,7 +199,7 @@ namespace CalDavSynchronizer.Implementation.Events
             // (sent by Outlook itself, or received) do, so the server never sends a second copy.
             var scheduleAgentClient = _configuration.ScheduleAgentClient || !ServerSchedulingSendGuard.IsServerScheduled(sourceWrapper.Inner);
 
-            await Map1To2(sourceWrapper.Inner, newTargetEvent, false, startIcalTimeZone, endIcalTimeZone, logger, context, scheduleAgentClient);
+            await Map1To2(sourceWrapper.Inner, newTargetEvent, false, startIcalTimeZone, endIcalTimeZone, logger, context, scheduleAgentClient, existingTargetEvent);
 
             for (int i = 0, newSequenceNumber = existingTargetCalender.Events.Count > 0 ? existingTargetCalender.Events.Max(e => e.Sequence) + 1 : 0;
                 i < newTargetCalender.Events.Count;
@@ -211,7 +211,7 @@ namespace CalDavSynchronizer.Implementation.Events
             return newTargetCalender;
         }
 
-        private async Task Map1To2(AppointmentItem source, IEvent target, bool isRecurrenceException, ITimeZone startIcalTimeZone, ITimeZone endIcalTimeZone, IEntitySynchronizationLogger logger, IEventSynchronizationContext context, bool scheduleAgentClient)
+        private async Task Map1To2(AppointmentItem source, IEvent target, bool isRecurrenceException, ITimeZone startIcalTimeZone, ITimeZone endIcalTimeZone, IEntitySynchronizationLogger logger, IEventSynchronizationContext context, bool scheduleAgentClient, IEvent existingTargetEventOrNull)
         {
             if (source.AllDayEvent)
             {
@@ -308,7 +308,7 @@ namespace CalDavSynchronizer.Implementation.Events
 
             target.Class = CommonEntityMapper.MapPrivacy1To2(source.Sensitivity, _configuration.MapSensitivityPrivateToClassConfidential, _configuration.MapSensitivityPublicToDefault);
 
-            MapReminder1To2(source, target, isRecurrenceException);
+            MapReminder1To2(source, target, isRecurrenceException, existingTargetEventOrNull);
 
             MapCategories1To2(source, target, context);
 
@@ -416,18 +416,35 @@ namespace CalDavSynchronizer.Implementation.Events
             }
         }
 
-        private void MapReminder1To2(AppointmentItem source, IEvent target, bool isRecurrenceException)
+        private void MapReminder1To2(AppointmentItem source, IEvent target, bool isRecurrenceException, IEvent existingTargetEventOrNull)
         {
             if (_configuration.MapReminder == ReminderMapping.@false)
                 return;
 
-            if (source.ReminderSet)
+            if (!source.ReminderSet)
+            {
+                // Outlook clears ReminderSet when a reminder is dismissed. In a shared calendar, uploading that would remove
+                // the alarm for everybody, possibly before it showed up for them. So a due alarm stays on the server until
+                // the event has ended. Removing an alarm that is not due yet removes it for everybody.
+                if (existingTargetEventOrNull != null && !source.IsRecurring && source.EndUTC > DateTime.UtcNow)
+                {
+                    var existingAlarm = existingTargetEventOrNull.Alarms.FirstOrDefault(a => a.Action == AlarmAction.Display);
+                    var existingAlarmTimeUtc = GetAlarmTimeUtcOrNull(existingAlarm, source.StartUTC, source.EndUTC);
+                    if (existingAlarmTimeUtc.HasValue && existingAlarmTimeUtc.Value <= DateTime.UtcNow)
+                        AddDisplayAlarm(target, existingAlarmTimeUtc.Value - source.StartUTC);
+                }
+
+                return;
+            }
+
             {
                 var reminderRelativeToStart = TimeSpan.FromMinutes(-source.ReminderMinutesBeforeStart);
 
                 if (_configuration.MapReminder == ReminderMapping.JustUpcoming)
                 {
-                    if ((!source.IsRecurring || isRecurrenceException) && source.StartUTC.Add(reminderRelativeToStart) <= DateTime.UtcNow)
+                    // A reminder that is due already is still mapped while the event hasn't ended: whoever set it that way
+                    // wants everybody to see it now. Only reminders of past events are left out.
+                    if ((!source.IsRecurring || isRecurrenceException) && source.EndUTC <= DateTime.UtcNow)
                         return;
                     if (source.IsRecurring && !isRecurrenceException)
                     {
@@ -440,28 +457,70 @@ namespace CalDavSynchronizer.Implementation.Events
                     }
                 }
 
-                var trigger = new Trigger(reminderRelativeToStart);
-
-                target.Alarms.Add(
-                    new Alarm()
-                    {
-                        Description = "This is an event reminder"
-                    }
-                );
-                // Fix DDay.iCal TimeSpan 0 serialization
-                if (reminderRelativeToStart == TimeSpan.Zero)
-                {
-                    target.Alarms[0].Properties.Add(new CalendarProperty("TRIGGER", "-P0D"));
-                }
-                else
-                {
-                    target.Alarms[0].Trigger = trigger;
-                }
-
-                // Fix for google, since Google wants ACTION property DISPLAY in uppercase
-                var actionProperty = new CalendarProperty("ACTION", "DISPLAY");
-                target.Alarms[0].Properties.Add(actionProperty);
+                AddDisplayAlarm(target, reminderRelativeToStart);
             }
+        }
+
+        private static void AddDisplayAlarm(IEvent target, TimeSpan reminderRelativeToStart)
+        {
+            var trigger = new Trigger(reminderRelativeToStart);
+
+            target.Alarms.Add(
+                new Alarm()
+                {
+                    Description = "This is an event reminder"
+                }
+            );
+            // Fix DDay.iCal TimeSpan 0 serialization
+            if (reminderRelativeToStart == TimeSpan.Zero)
+            {
+                target.Alarms[0].Properties.Add(new CalendarProperty("TRIGGER", "-P0D"));
+            }
+            else
+            {
+                target.Alarms[0].Trigger = trigger;
+            }
+
+            // Fix for google, since Google wants ACTION property DISPLAY in uppercase
+            var actionProperty = new CalendarProperty("ACTION", "DISPLAY");
+            target.Alarms[0].Properties.Add(actionProperty);
+        }
+
+        private static DateTime? GetAlarmTimeUtcOrNull(IAlarm alarm, DateTime startUtc, DateTime endUtc)
+        {
+            if (alarm?.Trigger == null)
+                return null;
+
+            if (alarm.Trigger.IsRelative)
+            {
+                if (!alarm.Trigger.Duration.HasValue)
+                    return null;
+                return (alarm.Trigger.Related == TriggerRelation.End ? endUtc : startUtc).Add(alarm.Trigger.Duration.Value);
+            }
+
+            if (alarm.Trigger.DateTime != null)
+                return alarm.Trigger.DateTime.AsUtc();
+
+            return null;
+        }
+
+        /// <summary>
+        /// With JustUpcoming, a reminder that is due already is shown while the event hasn't ended, because whoever set it
+        /// that way wants everybody to see it now. It is not set again once the user dismissed it in Outlook (Outlook
+        /// clears ReminderSet then), otherwise it would pop up again on every change of the event on the server.
+        /// </summary>
+        private bool IsDueReminderToSkip(AppointmentItem target, bool isRecurrenceException, DateTime alarmTimeUtc)
+        {
+            if (_configuration.MapReminder != ReminderMapping.JustUpcoming)
+                return false;
+            // Recurring series are checked against the end of the series.
+            if (target.IsRecurring && !isRecurrenceException)
+                return false;
+            if (alarmTimeUtc > DateTime.UtcNow)
+                return false;
+
+            var isNewInOutlook = string.IsNullOrEmpty(target.EntryID);
+            return target.EndUTC <= DateTime.UtcNow || (!isNewInOutlook && !target.ReminderSet);
         }
 
 
@@ -526,10 +585,8 @@ namespace CalDavSynchronizer.Implementation.Events
 
             if (alarm.Trigger.IsRelative && alarm.Trigger.Duration.HasValue)
             {
-                if (_configuration.MapReminder == ReminderMapping.JustUpcoming &&
-                    (!target.IsRecurring || isRecurrenceException) &&
-                    (alarm.Trigger.Related == TriggerRelation.Start && target.StartUTC.Add(alarm.Trigger.Duration.Value) <= DateTime.UtcNow) ||
-                    (alarm.Trigger.Related == TriggerRelation.End && target.EndUTC.Add(alarm.Trigger.Duration.Value) <= DateTime.UtcNow))
+                var alarmTimeUtc = (alarm.Trigger.Related == TriggerRelation.End ? target.EndUTC : target.StartUTC).Add(alarm.Trigger.Duration.Value);
+                if (IsDueReminderToSkip(target, isRecurrenceException, alarmTimeUtc))
                 {
                     target.ReminderSet = false;
                     return;
@@ -557,7 +614,7 @@ namespace CalDavSynchronizer.Implementation.Events
             else if (alarm.Trigger.DateTime != null)
             {
                 var alarmTimeUtc = alarm.Trigger.DateTime.AsUtc();
-                if (_configuration.MapReminder == ReminderMapping.JustUpcoming && alarmTimeUtc < DateTime.UtcNow)
+                if (IsDueReminderToSkip(target, isRecurrenceException, alarmTimeUtc))
                 {
                     target.ReminderSet = false;
                     return;
@@ -899,7 +956,7 @@ namespace CalDavSynchronizer.Implementation.Events
                                     var targetException = new Event();
                                     target.Calendar.Events.Add(targetException);
                                     targetException.UID = target.UID;
-                                    await Map1To2(wrapper.Inner, targetException, true, startIcalTimeZone, endIcalTimeZone, logger, context, scheduleAgentClient);
+                                    await Map1To2(wrapper.Inner, targetException, true, startIcalTimeZone, endIcalTimeZone, logger, context, scheduleAgentClient, null);
 
                                     // Organizer must be the same for all components to avoid SameOrganizerForAllComponentsException
                                     if (target.Organizer != null)

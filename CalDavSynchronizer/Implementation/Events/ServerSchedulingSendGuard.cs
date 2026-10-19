@@ -37,17 +37,26 @@ namespace CalDavSynchronizer.Implementation.Events
     /// itself and the synchronization deletes it on the server, which sends the CANCEL.
     /// Only new meetings and meetings already handed to the server are taken over; meetings that
     /// Outlook has sent itself stay with Outlook (and keep SCHEDULE-AGENT=CLIENT on the server).
+    /// Responses (accept, tentative, decline) to received meetings are handled the same way: the
+    /// appointment is marked, the synchronization uploads the attendee's PARTSTAT without
+    /// SCHEDULE-AGENT=CLIENT, and the server sends the REPLY. Counter proposals stay with Outlook,
+    /// since an uploaded appointment can't express them and sabre/dav doesn't process COUNTER.
     /// </summary>
     public class ServerSchedulingSendGuard : IDisposable
     {
         private static readonly ILog s_logger = LogManager.GetLogger(MethodInfo.GetCurrentMethod().DeclaringType);
 
         private const string PR_FINVITED = "http://schemas.microsoft.com/mapi/id/{00062002-0000-0000-C000-000000000046}/8229000B";
+        private const string PR_RESPONSE_STATUS = "http://schemas.microsoft.com/mapi/id/{00062002-0000-0000-C000-000000000046}/82180003";
+        private const string PR_COUNTER_PROPOSAL = "http://schemas.microsoft.com/mapi/id/{00062002-0000-0000-C000-000000000046}/8257000B";
         private const string PR_SERVER_SCHEDULED = "http://schemas.microsoft.com/mapi/string/{00020329-0000-0000-C000-000000000046}/CalDavSynchronizerServerScheduled";
 
         private readonly Application _application;
         private readonly NameSpace _session;
         private readonly Func<Options[]> _loadOptions;
+
+        // Set while the guard itself hands a response back to Outlook, so ItemSend lets it pass.
+        private bool _isSendingFallback;
 
         public ServerSchedulingSendGuard(Application application, NameSpace session, Func<Options[]> loadOptions)
         {
@@ -63,13 +72,15 @@ namespace CalDavSynchronizer.Implementation.Events
             ((ApplicationEvents_11_Event) _application).ItemSend -= Application_ItemSend;
         }
 
-        public static bool IsServerScheduled(AppointmentItem appointment) => GetBooleanPropertyOrFalse(appointment, PR_SERVER_SCHEDULED);
+        public static bool IsServerScheduled(AppointmentItem appointment) => GetBooleanPropertyOrFalse(appointment.PropertyAccessor, PR_SERVER_SCHEDULED);
 
-        private static bool GetBooleanPropertyOrFalse(AppointmentItem appointment, string propertyName)
+        private static bool GetBooleanPropertyOrFalse(AppointmentItem appointment, string propertyName) => GetBooleanPropertyOrFalse(appointment.PropertyAccessor, propertyName);
+
+        private static bool GetBooleanPropertyOrFalse(PropertyAccessor accessor, string propertyName)
         {
             try
             {
-                using (var propertyAccessor = GenericComObjectWrapper.Create(appointment.PropertyAccessor))
+                using (var propertyAccessor = GenericComObjectWrapper.Create(accessor))
                 {
                     return propertyAccessor.Inner.GetProperty(propertyName) is bool value && value;
                 }
@@ -85,11 +96,22 @@ namespace CalDavSynchronizer.Implementation.Events
         {
             try
             {
+                if (_isSendingFallback)
+                    return;
+
                 var meetingItem = item as MeetingItem;
                 if (meetingItem == null)
                     return;
 
                 var meetingClass = meetingItem.Class;
+                if (meetingClass == OlObjectClass.olMeetingResponsePositive
+                    || meetingClass == OlObjectClass.olMeetingResponseTentative
+                    || meetingClass == OlObjectClass.olMeetingResponseNegative)
+                {
+                    HandleResponse(meetingItem, meetingClass, ref cancel);
+                    return;
+                }
+
                 if (meetingClass != OlObjectClass.olMeetingRequest && meetingClass != OlObjectClass.olMeetingCancellation)
                     return;
 
@@ -164,6 +186,129 @@ namespace CalDavSynchronizer.Implementation.Events
             {
                 // Never break sending because of the guard. If in doubt, Outlook sends.
                 s_logger.Error("ItemSend: error in send guard, Outlook sends.", x);
+            }
+        }
+
+        private void HandleResponse(MeetingItem response, OlObjectClass responseClass, ref bool cancel)
+        {
+            // A counter proposal ("Propose New Time") is sent as a tentative or negative response. The uploaded
+            // appointment keeps the original time, so the proposal would be lost, and sabre/dav doesn't know COUNTER.
+            if (GetBooleanPropertyOrFalse(response.PropertyAccessor, PR_COUNTER_PROPOSAL))
+            {
+                s_logger.Info($"ItemSend: counter proposal for '{response.Subject}', Outlook sends.");
+                return;
+            }
+
+            var appointment = response.GetAssociatedAppointment(false);
+            if (appointment == null)
+            {
+                s_logger.Warn($"ItemSend: no appointment found for response '{response.Subject}', Outlook sends.");
+                return;
+            }
+
+            if (appointment.MeetingStatus != OlMeetingStatus.olMeetingReceived)
+            {
+                s_logger.Info($"ItemSend: response for '{appointment.Subject}' with meeting status {appointment.MeetingStatus}, Outlook sends.");
+                return;
+            }
+
+            var profile = GetServerSchedulingProfileOrNull(appointment);
+            if (profile == null)
+                return;
+
+            OlResponseStatus responseStatus;
+            switch (responseClass)
+            {
+                case OlObjectClass.olMeetingResponsePositive:
+                    responseStatus = OlResponseStatus.olResponseAccepted;
+                    break;
+                case OlObjectClass.olMeetingResponseTentative:
+                    responseStatus = OlResponseStatus.olResponseTentative;
+                    break;
+                default:
+                    responseStatus = OlResponseStatus.olResponseDeclined;
+                    break;
+            }
+
+            s_logger.Info($"ItemSend: response {responseStatus} for '{appointment.Subject}', Outlook's status is {appointment.ResponseStatus}.");
+
+            // Save before cancelling, while still inside ItemSend. If saving fails, Outlook sends as usual.
+            // The response status is set explicitly, in case Outlook sets it only after sending.
+            using (var propertyAccessor = GenericComObjectWrapper.Create(appointment.PropertyAccessor))
+            {
+                propertyAccessor.Inner.SetProperty(PR_SERVER_SCHEDULED, true);
+                propertyAccessor.Inner.SetProperty(PR_RESPONSE_STATUS, (int) responseStatus);
+            }
+
+            appointment.Save();
+
+            s_logger.Info($"ItemSend: suppressing {responseClass} for '{appointment.Subject}' (profile '{profile.Name}'), the server sends the REPLY instead.");
+            cancel = true;
+
+            // "Edit the response before sending" opens the response in an inspector, which has to be closed.
+            var inspector = _application.ActiveInspector();
+            var isResponseInspector = inspector?.CurrentItem is MeetingItem inspectorItem && inspectorItem.Class == responseClass;
+
+            ComponentContainer.EnsureSynchronizationContext();
+            SynchronizationContext.Current.Post(_ => FinishResponse(response, appointment, responseStatus, isResponseInspector ? inspector : null), null);
+        }
+
+        private void FinishResponse(MeetingItem response, AppointmentItem appointment, OlResponseStatus responseStatus, Inspector inspectorOrNull)
+        {
+            try
+            {
+                try
+                {
+                    inspectorOrNull?.Close(OlInspectorClose.olDiscard);
+                }
+                catch (Exception x)
+                {
+                    s_logger.Warn("ItemSend: could not close response inspector.", x);
+                }
+
+                // When declining, Outlook may delete the appointment despite the cancelled send. The synchronization
+                // would then only delete it on the server, where it still has SCHEDULE-AGENT=CLIENT, so no REPLY.
+                // In that case Outlook sends the response after all, as before.
+                if (IsInCalendar(appointment))
+                {
+                    s_logger.Info($"ItemSend: appointment kept with response {appointment.ResponseStatus}, the synchronization uploads it.");
+                    return;
+                }
+
+                s_logger.Warn($"ItemSend: Outlook removed the appointment after the {responseStatus} response, letting Outlook send it.");
+                try
+                {
+                    _isSendingFallback = true;
+                    response.Send();
+                }
+                finally
+                {
+                    _isSendingFallback = false;
+                }
+            }
+            catch (Exception x)
+            {
+                s_logger.Error($"ItemSend: could not finish the {responseStatus} response. It may not have been sent.", x);
+            }
+            finally
+            {
+                if (inspectorOrNull != null)
+                    Marshal.ReleaseComObject(inspectorOrNull);
+                Marshal.ReleaseComObject(appointment);
+                Marshal.ReleaseComObject(response);
+            }
+        }
+
+        private bool IsInCalendar(AppointmentItem appointment)
+        {
+            try
+            {
+                return GetServerSchedulingProfileOrNull(appointment) != null;
+            }
+            catch (COMException x) when (x.ErrorCode == unchecked((int) 0x8004010A))
+            {
+                // Moved or deleted
+                return false;
             }
         }
 

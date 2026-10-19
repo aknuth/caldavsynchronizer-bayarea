@@ -49,8 +49,8 @@ profile that
 It takes over only **new** meetings (`PidLidFInvited` not set) and meetings it
 already handed to the server, which carry the named property
 `CalDavSynchronizerServerScheduled`. Meetings that Outlook sent itself earlier
-stay with Outlook, and so do responses to received invitations. Otherwise
-attendees would get updates from both Outlook and the server.
+stay with Outlook. Otherwise attendees would get updates from both Outlook
+and the server.
 
 **Invitation or update:**
 
@@ -75,6 +75,34 @@ the event on the server, and the server sends the `CANCEL`.
 **Removing a single attendee:** Outlook's cancellation to that attendee is
 suppressed; the server sends it after the upload.
 
+**Responses (accept, tentative, decline)** to received meetings, with the same
+profile conditions:
+
+1. Still inside `ItemSend`, the guard sets the marker and `PidLidResponseStatus`
+   on the appointment (in case Outlook sets it only after sending) and saves.
+2. It cancels the send. A response inspector (*Edit the response before
+   sending*) is closed afterwards.
+3. The synchronization uploads the attendee's `PARTSTAT` without
+   `SCHEDULE-AGENT=CLIENT`, and sabre/dav's iTIP broker sends the `REPLY`, to
+   an internal organizer directly into the organizer's event (also in a shared
+   calendar), to an external one by iMIP.
+
+*Don't send a response* triggers no `ItemSend`, so the appointment is not
+marked and the server stays silent too.
+
+**Counter proposals stay with Outlook.** *Propose New Time* is sent as a
+tentative or negative response with `PidLidAppointmentCounterProposal` set.
+The uploaded appointment keeps the original time, so the proposal would be
+lost, and sabre/dav's broker doesn't process `COUNTER` (`SCHEDULE-STATUS:
+5.0`). The organizer's *Accept Proposal* works as before for meetings in the
+default calendar.
+
+**Decline:** if Outlook removes the appointment despite the cancelled send,
+the synchronization would only delete it on the server, where it still has
+`SCHEDULE-AGENT=CLIENT`, so no `REPLY`. The guard checks afterwards and in that
+case lets Outlook send the response after all (log: *letting Outlook send
+it*).
+
 Log entries start with `ItemSend:` in `%LOCALAPPDATA%\CalDavSynchronizer\log.txt`.
 
 ### Mapper
@@ -84,9 +112,25 @@ Log entries start with `ItemSend:` in `%LOCALAPPDATA%\CalDavSynchronizer\log.txt
     scheduleAgentClient = profile.ScheduleAgentClient || !IsServerScheduled(appointment)
 
 `SCHEDULE-AGENT=CLIENT` is therefore written for every meeting the guard did
-not take over: meetings Outlook sent itself, and received invitations. This
-holds even when the profile setting is off, so the server never sends a second
-copy.
+not take over: meetings Outlook sent itself, and received invitations not yet
+answered through the guard. This holds even when the profile setting is off,
+so the server never sends a second copy.
+
+**Reminders** (`ReminderMapping.JustUpcoming`, the default): in a shared
+calendar there is one event with one `VALARM` for everybody; sabre/dav keeps
+no per-user alarms. The rule is about the **event**, not the reminder time:
+
+- A reminder is mapped in both directions while the event hasn't ended, even
+  if it is due already (set deliberately late, it pops up for everybody at
+  once). Reminders of past events are left out, otherwise the first
+  synchronization of a calendar with history would show hundreds of overdue
+  reminders.
+- Dismissing a reminder clears `ReminderSet` in Outlook. On upload, a due
+  `VALARM` is kept on the server until the event has ended, so one member's
+  dismiss doesn't remove it for the others. Removing a reminder that is not
+  due yet removes it for everybody.
+- From the server, a due reminder is not set again on an Outlook item where it
+  was dismissed, so it doesn't pop up again on every change of the event.
 
 ### Required profile settings
 
