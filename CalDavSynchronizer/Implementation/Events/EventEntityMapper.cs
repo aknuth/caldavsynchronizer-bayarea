@@ -644,6 +644,29 @@ namespace CalDavSynchronizer.Implementation.Events
             }
         }
 
+        private static bool HasSameTime(IEvent existing, AppointmentItem source)
+        {
+            try
+            {
+                if (existing.Start == null || existing.IsAllDay != source.AllDayEvent)
+                    return false;
+                if ((existing.RecurrenceRules.Count > 0) != source.IsRecurring)
+                    return false;
+
+                if (source.AllDayEvent)
+                    return existing.Start.Date == source.Start.Date && (existing.DTEnd == null || existing.DTEnd.Date == source.End.Date);
+
+                var start = existing.Start.AsUtc();
+                var end = existing.DTEnd != null ? existing.DTEnd.AsUtc() : start + existing.Duration;
+                return start == source.StartUTC && end == source.EndUTC;
+            }
+            catch (System.Exception x)
+            {
+                s_logger.Warn("Could not compare the time of the existing event, treating it as changed.", x);
+                return false;
+            }
+        }
+
         private static string GetParticipationStatusOrNull(IEvent eventOrNull, Uri attendeeAddressOrNull)
         {
             if (eventOrNull == null || attendeeAddressOrNull == null)
@@ -1532,8 +1555,9 @@ namespace CalDavSynchronizer.Implementation.Events
 
                     attendee.ParticipationStatus = MapParticipation1To2(recipient.MeetingResponseStatus);
                     // Outlook knows only responses it applied itself (from mails, and only in the default calendar). A
-                    // response the server entered (REPLY) must not be reset by the next upload.
-                    if (attendee.ParticipationStatus == "NEEDS-ACTION")
+                    // response the server entered (REPLY) must not be reset by the next upload, unless the time changed:
+                    // then everybody has to respond again (RFC 5546), and only a changed PARTSTAT makes the server send a REPLY.
+                    if (attendee.ParticipationStatus == "NEEDS-ACTION" && existingTargetEventOrNull != null && HasSameTime(existingTargetEventOrNull, source))
                         attendee.ParticipationStatus = GetParticipationStatusOrNull(existingTargetEventOrNull, attendee.Value) ?? attendee.ParticipationStatus;
                     attendee.CommonName = nameWithoutEmail;
                     attendee.Role = MapAttendeeType1To2((OlMeetingRecipientType) recipient.Type);

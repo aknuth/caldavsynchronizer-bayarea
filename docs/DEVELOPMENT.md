@@ -98,7 +98,11 @@ show it: `PR_RECIPIENT_TRACKSTATUS` can't be set through the object model
 (`0x80040102`, tried 2026-10-19); only Extended MAPI (`IMessage::ModifyRecipients`)
 could. The organizer sees the response in the server's mail. So that the next
 upload doesn't reset it, an attendee Outlook shows without response keeps the
-`PARTSTAT` of the event on the server.
+`PARTSTAT` of the event on the server, as long as start, end and recurrence
+are unchanged. When the time changes, the responses are reset (RFC 5546):
+otherwise the update tells the attendee he already accepted, his new
+acceptance changes nothing, and the server sends no `REPLY` (seen
+2026-10-19).
 
 **Response before the first synchronization:** an invitation from a user on
 the same server exists twice before the add-in knows either: as the copy the
