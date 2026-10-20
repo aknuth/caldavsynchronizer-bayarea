@@ -54,12 +54,12 @@ namespace CalDavSynchronizer.Implementation.Events
         private readonly Application _application;
         private readonly NameSpace _session;
         private readonly Func<Options[]> _loadOptions;
-        private readonly Action _synchronizeNow;
+        private readonly System.Action _synchronizeNow;
 
         // Set while the guard itself hands a response back to Outlook, so ItemSend lets it pass.
         private bool _isSendingFallback;
 
-        public ServerSchedulingSendGuard(Application application, NameSpace session, Func<Options[]> loadOptions, Action synchronizeNow)
+        public ServerSchedulingSendGuard(Application application, NameSpace session, Func<Options[]> loadOptions, System.Action synchronizeNow)
         {
             _application = application ?? throw new ArgumentNullException(nameof(application));
             _session = session ?? throw new ArgumentNullException(nameof(session));
