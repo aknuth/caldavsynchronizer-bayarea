@@ -631,7 +631,7 @@ namespace CalDavSynchronizer.DataAccess
             catch (WebDavClientException x) when (x.StatusCode == HttpStatusCode.PreconditionFailed)
             {
                 // If-None-Match: * failed, so the resource exists. The caller decides whether that is the same entity.
-                var existing = await GetEntities(new[] {new WebResourceName(new Uri(_serverUrl, fileName))});
+                var existing = await GetEntities(new[] {new WebResourceName(GetUrlInCollection(fileName))});
                 if (existing.Count == 0)
                     throw;
                 throw new ResourceAlreadyExistsException(existing[0].Entity, x);
@@ -640,7 +640,7 @@ namespace CalDavSynchronizer.DataAccess
 
         protected async Task<EntityVersion<WebResourceName, string>> CreateNewEntity(string name, string content)
         {
-            var eventUrl = new Uri(_serverUrl, name);
+            var eventUrl = GetUrlInCollection(name);
 
             s_logger.DebugFormat("Creating entity '{0}'", eventUrl);
 

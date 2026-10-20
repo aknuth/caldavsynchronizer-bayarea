@@ -50,6 +50,18 @@ namespace CalDavSynchronizer.DataAccess
             s_logger.DebugFormat("Created with Url '{0}'", _serverUrl);
         }
 
+        /// <summary>
+        /// The URL of a new resource in this collection. Throws if the name would lead anywhere else (an absolute URL,
+        /// "..", another host), so the request and the credentials that go with it never leave the configured server.
+        /// </summary>
+        protected Uri GetUrlInCollection(string name)
+        {
+            var url = new Uri(_serverUrl, name);
+            if (!_serverUrl.IsBaseOf(url) || url.GetLeftPart(UriPartial.Authority) != _serverUrl.GetLeftPart(UriPartial.Authority))
+                throw new InvalidOperationException($"Refusing to create '{url}', it is outside of the collection '{_serverUrl}'.");
+            return url;
+        }
+
         protected async Task<bool> HasOption(string requiredOption)
         {
             return await HasOption(_serverUrl, requiredOption);

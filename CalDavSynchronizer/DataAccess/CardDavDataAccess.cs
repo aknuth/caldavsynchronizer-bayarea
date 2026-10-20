@@ -242,7 +242,7 @@ namespace CalDavSynchronizer.DataAccess
 
         protected async Task<EntityVersion<WebResourceName, string>> CreateNewEntity(string name, string content)
         {
-            var contactUrl = new Uri(_serverUrl, name);
+            var contactUrl = GetUrlInCollection(name);
 
             s_logger.DebugFormat("Creating entity '{0}'", contactUrl);
 

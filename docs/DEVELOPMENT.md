@@ -203,6 +203,14 @@ GlobalAppointmentID is 106 + 2 × its length. Above 196 characters the add-in
 uses that embedded UID instead (it is the organizer's UID anyway), and if
 that is too long as well, a new GUID.
 
+The UID is also the resource name, but only if it is a plain path segment
+(letters, digits, `-_.@`, at most 196 characters); otherwise the name is a
+GUID. A UID can be anything: Adobe Connect uses a URL, and `new Uri(server,
+"https://…")` drops the server, so 5.2.1 sent the PUT, with the Basic
+credentials of the profile, to adobeconnect.com (answer `401` without text).
+`WebDavDataAccess.GetUrlInCollection` now refuses every new resource URL
+outside the profile's collection.
+
 ### Approaches tried and rejected
 
 - **Turning off `SCHEDULE-AGENT=CLIENT` alone.** The server sends, and Outlook
@@ -356,7 +364,7 @@ would have offered its release. *Check for Updates* in About reads
 `https://download.bayarea-cc.com/caldavsynchronizer/latest.json`:
 
 ```json
-{ "version": "5.0.1", "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.2.1.zip", "notes": "optional" }
+{ "version": "5.0.1", "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.2.2.zip", "notes": "optional" }
 ```
 
 If that version is newer than the installed one, it offers to open the
@@ -439,18 +447,18 @@ Short version with the update check: [UPDATES.md](UPDATES.md).
    only the bootstrapper: it checks the prerequisites and runs the `.msi`
    next to it.
    ```powershell
-   Compress-Archive -Path CalDavSynchronizer.Setup\Release\setup.exe, CalDavSynchronizer.Setup\Release\CalDavSynchronizer.Setup.msi -DestinationPath CalDavSynchronizer-BayArea-5.2.1.zip
+   Compress-Archive -Path CalDavSynchronizer.Setup\Release\setup.exe, CalDavSynchronizer.Setup\Release\CalDavSynchronizer.Setup.msi -DestinationPath CalDavSynchronizer-BayArea-5.2.2.zip
    ```
    Upload the zip to `https://download.bayarea-cc.com/caldavsynchronizer/`,
    for example with the OpenSSH client built into Windows:
    ```powershell
-   scp CalDavSynchronizer-BayArea-5.2.1.zip release\latest.json <user>@<download server>:<download directory>/caldavsynchronizer/
+   scp CalDavSynchronizer-BayArea-5.2.2.zip release\latest.json <user>@<download server>:<download directory>/caldavsynchronizer/
    ```
    The version in the name keeps browsers and proxies from serving an old
    cached file.
 5. Update `latest.json` there (`url` pointing to the new zip). Upload the zip
    first, so `latest.json` never points to a missing file.
-6. Commit, tag (`v5.2.1`), push. The AGPL requires the source of every
+6. Commit, tag (`v5.2.2`), push. The AGPL requires the source of every
    released version to be available.
 
 ## 9. Test log
@@ -478,5 +486,6 @@ Short version with the update check: [UPDATES.md](UPDATES.md).
 | 2026-10-19 | accept of an update | response waited for the scheduled synchronization; fixed by synchronizing right after the response |
 | 2026-10-19 | decline from the invitation mail after accepting through the server | was delivered twice (Outlook and the server on delete); now exactly one, from Outlook |
 | 2026-10-20 | first sync of a customer calendar with existing invitations from other systems | `500`, UID longer than 200 characters; fixed in 5.2.1 |
+| 2026-10-20 | Adobe Connect invitations (UID is a URL) | 5.2.1 sent the PUT to adobeconnect.com, `401`; fixed in 5.2.2 |
 | 2026-10-15 | 412 on *Synchronize now* | attendee copy of an invitation from `andreas.knuth@` to `info@haiky.app` (same Outlook) in the organizer's calendar, same UID as the organizer copy; now a warning instead of an error |
 | 2026-10-13 | automatic setup, global contact list | `info@haiky.app`: calendar, own address book and the company list `customers` (display name, not `gal-customers`) as a real contacts subfolder; contacts synced |

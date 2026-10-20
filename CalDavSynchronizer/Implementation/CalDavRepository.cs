@@ -348,9 +348,7 @@ namespace CalDavSynchronizer.Implementation
                 IICalendar newCalendar = new iCalendar();
                 newCalendar = await entityInitializer(newCalendar);
                 var uid = newCalendar.Events.Count > 0 ? newCalendar.Events[0].UID : newCalendar.Todos[0].UID;
-                // sabre/dav stores the resource name, including ".ics", in a varchar(200) column.
-                const int maximumNameLength = 196;
-                var name = uid.Length <= maximumNameLength ? uid : Guid.NewGuid().ToString();
+                var name = IsUsableAsResourceName(uid) ? uid : Guid.NewGuid().ToString();
                 try
                 {
                     return await _calDavDataAccess.CreateEntity(SerializeCalendar(newCalendar), name);
@@ -387,6 +385,19 @@ namespace CalDavSynchronizer.Implementation
             }
         }
 
+
+        /// <summary>
+        /// Whether the UID can be the resource name: a plain path segment that fits sabre/dav's varchar(200) column
+        /// with ".ics". A UID can be anything, e.g. a URL (Adobe Connect), which would replace the server's URL.
+        /// </summary>
+        private static bool IsUsableAsResourceName(string uid)
+        {
+            const int maximumNameLength = 196;
+            return !string.IsNullOrEmpty(uid)
+                   && uid.Length <= maximumNameLength
+                   && uid.All(c => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == '_' || c == '.' || c == '@')
+                   && uid.Trim('.').Length > 0;
+        }
 
         private string SerializeCalendar(IICalendar calendar)
         {
