@@ -208,6 +208,41 @@ namespace CalDavSynchronizer.Implementation.Common
             return globalId;
         }
 
+        /// <summary>
+        /// The UID a GlobalAppointmentID was made from (see MapUidToGlobalId), or null if it doesn't contain one.
+        /// Outlook builds the GlobalAppointmentID of an invitation from another calendar system that way.
+        /// </summary>
+        public static string GetUidFromGlobalIdOrNull(string globalAppointmentId)
+        {
+            const int sizeOffset = 36;
+            const int uidPrefixOffset = 40;
+            const int uidOffset = 52;
+            byte[] uidPrefix = {0x76, 0x43, 0x61, 0x6C, 0x2D, 0x55, 0x69, 0x64, 0x01, 0x00, 0x00, 0x00};
+
+            if (string.IsNullOrEmpty(globalAppointmentId) || globalAppointmentId.Length % 2 != 0 || globalAppointmentId.Length / 2 <= uidOffset)
+                return null;
+
+            var globalId = new byte[globalAppointmentId.Length / 2];
+            for (int i = 0; i < globalId.Length; i++)
+            {
+                if (!byte.TryParse(globalAppointmentId.Substring(i * 2, 2), System.Globalization.NumberStyles.HexNumber, null, out globalId[i]))
+                    return null;
+            }
+
+            for (int i = 0; i < uidPrefix.Length; i++)
+            {
+                if (globalId[uidPrefixOffset + i] != uidPrefix[i])
+                    return null;
+            }
+
+            var uidLength = BitConverter.ToInt32(globalId, sizeOffset) - uidPrefix.Length;
+            if (uidLength <= 0 || uidOffset + uidLength > globalId.Length)
+                return null;
+
+            var uid = Encoding.Default.GetString(globalId, uidOffset, uidLength).TrimEnd('\0');
+            return uid.Length > 0 ? uid : null;
+        }
+
         public static byte[] MapUidToGlobalExceptionId(string uid, DateTime originalStart)
         {
             byte[] globalId = MapUidToGlobalId(uid);

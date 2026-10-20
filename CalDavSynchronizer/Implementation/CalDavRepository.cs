@@ -348,7 +348,8 @@ namespace CalDavSynchronizer.Implementation
                 IICalendar newCalendar = new iCalendar();
                 newCalendar = await entityInitializer(newCalendar);
                 var uid = newCalendar.Events.Count > 0 ? newCalendar.Events[0].UID : newCalendar.Todos[0].UID;
-                const int maximumNameLength = 255;
+                // sabre/dav stores the resource name, including ".ics", in a varchar(200) column.
+                const int maximumNameLength = 196;
                 var name = uid.Length <= maximumNameLength ? uid : Guid.NewGuid().ToString();
                 try
                 {

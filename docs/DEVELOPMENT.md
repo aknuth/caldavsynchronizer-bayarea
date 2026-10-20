@@ -194,6 +194,15 @@ The automatic setup applies these:
 New events then get resource names like `040000008200E000...ics`
 (upper-case hex). A pattern like `[0-9a-f-]+\.ics` misses them.
 
+sabre/dav's PostgreSQL schema stores the UID and the resource name in
+`varchar(200)` columns; a longer one fails with `500`, *"value too long for
+type character varying(200)"*. Outlook's own GlobalAppointmentIDs are 112
+characters, but for an invitation from another calendar system (Google,
+Teams, booking tools) Outlook embeds the organizer's UID, so the
+GlobalAppointmentID is 106 + 2 × its length. Above 196 characters the add-in
+uses that embedded UID instead (it is the organizer's UID anyway), and if
+that is too long as well, a new GUID.
+
 ### Approaches tried and rejected
 
 - **Turning off `SCHEDULE-AGENT=CLIENT` alone.** The server sends, and Outlook
@@ -347,7 +356,7 @@ would have offered its release. *Check for Updates* in About reads
 `https://download.bayarea-cc.com/caldavsynchronizer/latest.json`:
 
 ```json
-{ "version": "5.0.1", "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.2.0.zip", "notes": "optional" }
+{ "version": "5.0.1", "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.2.1.zip", "notes": "optional" }
 ```
 
 If that version is newer than the installed one, it offers to open the
@@ -430,18 +439,18 @@ Short version with the update check: [UPDATES.md](UPDATES.md).
    only the bootstrapper: it checks the prerequisites and runs the `.msi`
    next to it.
    ```powershell
-   Compress-Archive -Path CalDavSynchronizer.Setup\Release\setup.exe, CalDavSynchronizer.Setup\Release\CalDavSynchronizer.Setup.msi -DestinationPath CalDavSynchronizer-BayArea-5.2.0.zip
+   Compress-Archive -Path CalDavSynchronizer.Setup\Release\setup.exe, CalDavSynchronizer.Setup\Release\CalDavSynchronizer.Setup.msi -DestinationPath CalDavSynchronizer-BayArea-5.2.1.zip
    ```
    Upload the zip to `https://download.bayarea-cc.com/caldavsynchronizer/`,
    for example with the OpenSSH client built into Windows:
    ```powershell
-   scp CalDavSynchronizer-BayArea-5.2.0.zip release\latest.json <user>@<download server>:<download directory>/caldavsynchronizer/
+   scp CalDavSynchronizer-BayArea-5.2.1.zip release\latest.json <user>@<download server>:<download directory>/caldavsynchronizer/
    ```
    The version in the name keeps browsers and proxies from serving an old
    cached file.
 5. Update `latest.json` there (`url` pointing to the new zip). Upload the zip
    first, so `latest.json` never points to a missing file.
-6. Commit, tag (`v5.2.0`), push. The AGPL requires the source of every
+6. Commit, tag (`v5.2.1`), push. The AGPL requires the source of every
    released version to be available.
 
 ## 9. Test log
@@ -468,5 +477,6 @@ Short version with the update check: [UPDATES.md](UPDATES.md).
 | 2026-10-19 | accept before the first synchronization | response was lost (initial matching); fixed by uploading marked meetings after matching |
 | 2026-10-19 | accept of an update | response waited for the scheduled synchronization; fixed by synchronizing right after the response |
 | 2026-10-19 | decline from the invitation mail after accepting through the server | was delivered twice (Outlook and the server on delete); now exactly one, from Outlook |
+| 2026-10-20 | first sync of a customer calendar with existing invitations from other systems | `500`, UID longer than 200 characters; fixed in 5.2.1 |
 | 2026-10-15 | 412 on *Synchronize now* | attendee copy of an invitation from `andreas.knuth@` to `info@haiky.app` (same Outlook) in the organizer's calendar, same UID as the organizer copy; now a warning instead of an error |
 | 2026-10-13 | automatic setup, global contact list | `info@haiky.app`: calendar, own address book and the company list `customers` (display name, not `gal-customers`) as a real contacts subfolder; contacts synced |

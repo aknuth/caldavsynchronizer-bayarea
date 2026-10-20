@@ -191,7 +191,7 @@ namespace CalDavSynchronizer.Implementation.Events
             if (existingTargetEvent != null)
                 newTargetEvent.UID = existingTargetEvent.UID;
             else if (_configuration.UseGlobalAppointmentID)
-                newTargetEvent.UID = sourceWrapper.Inner.GlobalAppointmentID;
+                newTargetEvent.UID = GetUidFromGlobalAppointmentIdOrNull(sourceWrapper.Inner.GlobalAppointmentID) ?? newTargetEvent.UID;
 
             newTargetCalender.Events.Add(newTargetEvent);
 
@@ -642,6 +642,28 @@ namespace CalDavSynchronizer.Implementation.Events
                     target.ReminderSet = false;
                 }
             }
+        }
+
+        // sabre/dav stores the UID and the resource name (UID + ".ics") in varchar(200) columns.
+        private const int MaximumUidLength = 196;
+
+        /// <summary>
+        /// The GlobalAppointmentID, or for an invitation from another calendar system, whose GlobalAppointmentID
+        /// grows with the length of its UID, that UID, if it fits on the server. Null otherwise.
+        /// </summary>
+        private static string GetUidFromGlobalAppointmentIdOrNull(string globalAppointmentId)
+        {
+            if (string.IsNullOrEmpty(globalAppointmentId))
+                return null;
+            if (globalAppointmentId.Length <= MaximumUidLength)
+                return globalAppointmentId;
+
+            var embeddedUid = OutlookUtility.GetUidFromGlobalIdOrNull(globalAppointmentId);
+            if (embeddedUid != null && embeddedUid.Length <= MaximumUidLength)
+                return embeddedUid;
+
+            s_logger.Warn($"GlobalAppointmentID '{globalAppointmentId}' is too long for the server, using a new UID.");
+            return null;
         }
 
         private static bool HasSameTime(IEvent existing, AppointmentItem source)
