@@ -1,5 +1,5 @@
 {
-  "version": "5.2.1",
-  "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.2.1.zip",
-  "notes": "Fixes the first synchronization of calendars that contain invitations from other calendar systems (server error 500, value too long). 5.2.0: accepting, tentatively accepting and declining invitations goes through the server; declining or deleting a meeting in a shared calendar no longer deletes it for everybody; reminders that are already due are shown while the meeting has not ended."
+  "version": "5.2.2",
+  "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.2.2.zip",
+  "notes": "Important fix: invitations whose ID is a web address (e.g. Adobe Connect) failed with error 401 and were sent to that address instead of to the server. Please update. Also: calendars with invitations from other calendar systems synchronize again (error 500)."
 }
