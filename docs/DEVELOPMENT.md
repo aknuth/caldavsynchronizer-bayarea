@@ -136,17 +136,6 @@ the relation, so the next synchronization brings the event back to Outlook
 (report warning *"Not deleted on the server ..."*). Events without organizer
 and the user's own meetings are deleted as usual.
 
-**Decline from the invitation mail:** Outlook moves the appointment to
-*Deleted Items* before `ItemSend`. If the meeting was answered through the
-server before, its server copy has no `SCHEDULE-AGENT=CLIENT`, and sabre/dav
-sends a `REPLY DECLINED` when the synchronization deletes it. Outlook's own
-decline would be a second one (seen 2026-10-19). The guard therefore records
-the profile with the marker (`CalDavSynchronizerServerScheduledProfile`); for
-a decline of a marked appointment from an own calendar it cancels Outlook's
-send and starts the synchronization. Unmarked meetings (server copy with
-`CLIENT`) and calendars shared by someone else (nothing is deleted there) keep
-Outlook's decline.
-
 **Decline:** if Outlook removes the appointment despite the cancelled send,
 the synchronization would only delete it on the server, where it still has
 `SCHEDULE-AGENT=CLIENT`, so no `REPLY`. The guard checks afterwards and in that

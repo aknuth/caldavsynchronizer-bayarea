@@ -50,8 +50,6 @@ namespace CalDavSynchronizer.Implementation.Events
         private const string PR_RESPONSE_STATUS = "http://schemas.microsoft.com/mapi/id/{00062002-0000-0000-C000-000000000046}/82180003";
         private const string PR_COUNTER_PROPOSAL = "http://schemas.microsoft.com/mapi/id/{00062002-0000-0000-C000-000000000046}/8257000B";
         private const string PR_SERVER_SCHEDULED = "http://schemas.microsoft.com/mapi/string/{00020329-0000-0000-C000-000000000046}/CalDavSynchronizerServerScheduled";
-        // Id of the profile whose folder held the appointment when it was marked, to know where it came from once Outlook moved it.
-        private const string PR_SERVER_SCHEDULED_PROFILE = "http://schemas.microsoft.com/mapi/string/{00020329-0000-0000-C000-000000000046}/CalDavSynchronizerServerScheduledProfile";
 
         private readonly Application _application;
         private readonly NameSpace _session;
@@ -164,8 +162,6 @@ namespace CalDavSynchronizer.Implementation.Events
                     using (var propertyAccessor = GenericComObjectWrapper.Create(appointment.PropertyAccessor))
                     {
                         propertyAccessor.Inner.SetProperty(PR_SERVER_SCHEDULED, true);
-                propertyAccessor.Inner.SetProperty(PR_SERVER_SCHEDULED_PROFILE, profile.Id.ToString());
-                        propertyAccessor.Inner.SetProperty(PR_SERVER_SCHEDULED_PROFILE, profile.Id.ToString());
                         if (inspectorAppointment == null)
                             propertyAccessor.Inner.SetProperty(PR_FINVITED, true);
                     }
@@ -233,22 +229,7 @@ namespace CalDavSynchronizer.Implementation.Events
 
             var profile = GetServerSchedulingProfileOrNull(appointment);
             if (profile == null)
-            {
-                if (responseClass == OlObjectClass.olMeetingResponseNegative && IsDeclineSentByServerOnDelete(appointment))
-                {
-                    // Declining from the invitation mail, Outlook moves the appointment to Deleted Items before sending. The
-                    // server's copy has no SCHEDULE-AGENT=CLIENT (the meeting was answered through the server before), so
-                    // the server sends a REPLY DECLINED when the synchronization deletes it. Outlook must not send a second one.
-                    s_logger.Info($"ItemSend: suppressing decline for '{appointment.Subject}', removed by Outlook; the server sends the REPLY when the synchronization deletes it.");
-                    cancel = true;
-                    ComponentContainer.EnsureSynchronizationContext();
-                    SynchronizationContext.Current.Post(_ => _synchronizeNow(), null);
-                    return;
-                }
-
-                s_logger.Info($"ItemSend: response for '{appointment.Subject}' not in a folder of a server scheduling profile, Outlook sends.");
                 return;
-            }
 
             OlResponseStatus responseStatus;
             switch (responseClass)
@@ -285,31 +266,6 @@ namespace CalDavSynchronizer.Implementation.Events
 
             ComponentContainer.EnsureSynchronizationContext();
             SynchronizationContext.Current.Post(_ => FinishResponse(response, appointment, responseStatus, isResponseInspector ? inspector : null), null);
-        }
-
-        private bool IsDeclineSentByServerOnDelete(AppointmentItem appointment)
-        {
-            if (!IsServerScheduled(appointment))
-                return false;
-
-            string profileId;
-            try
-            {
-                using (var propertyAccessor = GenericComObjectWrapper.Create(appointment.PropertyAccessor))
-                {
-                    profileId = propertyAccessor.Inner.GetProperty(PR_SERVER_SCHEDULED_PROFILE) as string;
-                }
-            }
-            catch (COMException)
-            {
-                // Marked before the profile was recorded
-                return false;
-            }
-
-            // In a calendar shared by someone else, the add-in doesn't delete others' meetings on the server (see
-            // CalDavRepository), so the server would never send the decline.
-            var profile = _loadOptions().FirstOrDefault(o => o.Id.ToString() == profileId);
-            return profile != null && !profile.Inactive && profile.SharedCollectionOwner == null;
         }
 
         private void FinishResponse(MeetingItem response, AppointmentItem appointment, OlResponseStatus responseStatus, Inspector inspectorOrNull)
