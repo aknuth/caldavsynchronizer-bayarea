@@ -82,7 +82,10 @@ profile conditions:
    on the appointment (in case Outlook sets it only after sending) and saves.
 2. It cancels the send. A response inspector (*Edit the response before
    sending*) is closed afterwards.
-3. The synchronization uploads the attendee's `PARTSTAT` without
+3. The guard starts a synchronization right away: the change trigger
+   (`FolderChangeWatcher`) deliberately ignores received meetings, so
+   otherwise the response would wait for the next interval.
+4. The synchronization uploads the attendee's `PARTSTAT` without
    `SCHEDULE-AGENT=CLIENT`, and sabre/dav's iTIP broker sends the `REPLY`, to
    an internal organizer directly into the organizer's event (also in a shared
    calendar), to an external one by iMIP.

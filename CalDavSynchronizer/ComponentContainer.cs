@@ -244,7 +244,7 @@ namespace CalDavSynchronizer
 
             _oneTimeTaskRunner = new OneTimeTaskRunner(_outlookSession);
 
-            _serverSchedulingSendGuard = new ServerSchedulingSendGuard(application, _session, _optionsDataAccess.Load);
+            _serverSchedulingSendGuard = new ServerSchedulingSendGuard(application, _session, _optionsDataAccess.Load, RunSynchronizationNowNoThrow);
             _accountAutoSetup = new AccountAutoSetup(_session, _outlookAccountPasswordProvider);
 
             DDayICalWorkaround.DDayICalCustomization.InitializeNoThrow();

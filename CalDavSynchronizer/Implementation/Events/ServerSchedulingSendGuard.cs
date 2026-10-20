@@ -54,15 +54,17 @@ namespace CalDavSynchronizer.Implementation.Events
         private readonly Application _application;
         private readonly NameSpace _session;
         private readonly Func<Options[]> _loadOptions;
+        private readonly Action _synchronizeNow;
 
         // Set while the guard itself hands a response back to Outlook, so ItemSend lets it pass.
         private bool _isSendingFallback;
 
-        public ServerSchedulingSendGuard(Application application, NameSpace session, Func<Options[]> loadOptions)
+        public ServerSchedulingSendGuard(Application application, NameSpace session, Func<Options[]> loadOptions, Action synchronizeNow)
         {
             _application = application ?? throw new ArgumentNullException(nameof(application));
             _session = session ?? throw new ArgumentNullException(nameof(session));
             _loadOptions = loadOptions ?? throw new ArgumentNullException(nameof(loadOptions));
+            _synchronizeNow = synchronizeNow ?? throw new ArgumentNullException(nameof(synchronizeNow));
 
             ((ApplicationEvents_11_Event) _application).ItemSend += Application_ItemSend;
         }
@@ -284,7 +286,9 @@ namespace CalDavSynchronizer.Implementation.Events
                 // In that case Outlook sends the response after all, as before.
                 if (IsInCalendar(appointment))
                 {
-                    s_logger.Info($"ItemSend: appointment kept with response {appointment.ResponseStatus}, the synchronization uploads it.");
+                    // The change trigger ignores received meetings (FolderChangeWatcher), so start the upload here.
+                    s_logger.Info($"ItemSend: appointment kept with response {appointment.ResponseStatus}, synchronizing to upload it.");
+                    _synchronizeNow();
                     return;
                 }
 
