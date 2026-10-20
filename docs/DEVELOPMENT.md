@@ -452,5 +452,10 @@ Short version with the update check: [UPDATES.md](UPDATES.md).
 | 2026-10-08 | recipient on the same server, after the server change | exactly one invitation, exactly one reply back |
 | 2026-10-06 | automatic setup | own calendar and address book on default folders, shared calendar as read-only subfolder named after its owner |
 | 2026-10-06 | installer | no trust prompt, add-in not disabled after several restarts |
+| 2026-10-19 | reminder due already, event tomorrow | pops up at once for the creator and, after synchronizing, for the other member of the shared calendar; `VALARM` stays on the server |
+| 2026-10-19 | accept, invitation from the own calendar | Outlook's response suppressed, server sends the `REPLY` (sender `caldav@…`), organizer's Outlook applies it |
+| 2026-10-19 | accept, invitation from a shared calendar | `REPLY` entered into the organizer's event (`PARTSTAT=ACCEPTED`); organizer gets the mail, Outlook can't apply it (*couldn't find this meeting*), *Tracking* not updated |
+| 2026-10-19 | accept before the first synchronization | response was lost (initial matching); fixed by uploading marked meetings after matching |
+| 2026-10-19 | accept of an update | response waited for the scheduled synchronization; fixed by synchronizing right after the response |
 | 2026-10-15 | 412 on *Synchronize now* | attendee copy of an invitation from `andreas.knuth@` to `info@haiky.app` (same Outlook) in the organizer's calendar, same UID as the organizer copy; now a warning instead of an error |
 | 2026-10-13 | automatic setup, global contact list | `info@haiky.app`: calendar, own address book and the company list `customers` (display name, not `gal-customers`) as a real contacts subfolder; contacts synced |
