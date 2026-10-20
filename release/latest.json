@@ -1,5 +1,5 @@
 {
   "version": "5.2.0",
   "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.2.0.zip",
-  "notes": "Accepting, tentatively accepting and declining invitations now goes through the server, like sending them. Reminders that are already due are shown while the meeting has not ended."
+  "notes": "Accepting, tentatively accepting and declining invitations now goes through the server, like sending them. Declining or deleting a meeting in a calendar shared by someone else no longer deletes it for everybody. Reminders that are already due are shown while the meeting has not ended."
 }

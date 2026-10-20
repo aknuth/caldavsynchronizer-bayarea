@@ -467,5 +467,6 @@ Short version with the update check: [UPDATES.md](UPDATES.md).
 | 2026-10-19 | accept, invitation from a shared calendar | `REPLY` entered into the organizer's event (`PARTSTAT=ACCEPTED`); organizer gets the mail, Outlook can't apply it (*couldn't find this meeting*), *Tracking* not updated |
 | 2026-10-19 | accept before the first synchronization | response was lost (initial matching); fixed by uploading marked meetings after matching |
 | 2026-10-19 | accept of an update | response waited for the scheduled synchronization; fixed by synchronizing right after the response |
+| 2026-10-19 | decline from the invitation mail after accepting through the server | was delivered twice (Outlook and the server on delete); now exactly one, from Outlook |
 | 2026-10-15 | 412 on *Synchronize now* | attendee copy of an invitation from `andreas.knuth@` to `info@haiky.app` (same Outlook) in the organizer's calendar, same UID as the organizer copy; now a warning instead of an error |
 | 2026-10-13 | automatic setup, global contact list | `info@haiky.app`: calendar, own address book and the company list `customers` (display name, not `gal-customers`) as a real contacts subfolder; contacts synced |
