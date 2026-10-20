@@ -58,7 +58,8 @@ namespace CalDavSynchronizer.Implementation
         private readonly IDateTimeRangeProvider _dateTimeRangeProvider;
         private readonly bool _deleteAndCreateOnUpdateError403;
         private readonly IEqualityComparer<string> _versionComparer;
-        private readonly string _userAddressInSharedCollectionOrNull;
+        private readonly string _userAddressOrNull;
+        private readonly bool _isSharedCollection;
 
 
         public CalDavRepository(
@@ -68,7 +69,8 @@ namespace CalDavSynchronizer.Implementation
             IDateTimeRangeProvider dateTimeRangeProvider,
             bool deleteAndCreateOnUpdateError403,
             IEqualityComparer<string> versionComparer,
-            string userAddressInSharedCollectionOrNull = null)
+            string userAddressOrNull = null,
+            bool isSharedCollection = false)
         {
             if (versionComparer == null) throw new ArgumentNullException(nameof(versionComparer));
             _deleteAndCreateOnUpdateError403 = deleteAndCreateOnUpdateError403;
@@ -77,7 +79,8 @@ namespace CalDavSynchronizer.Implementation
             _calendarSerializer = calendarSerializer;
             _entityType = entityType;
             _dateTimeRangeProvider = dateTimeRangeProvider;
-            _userAddressInSharedCollectionOrNull = userAddressInSharedCollectionOrNull;
+            _userAddressOrNull = userAddressOrNull;
+            _isSharedCollection = isSharedCollection;
         }
 
         public async Task<IEnumerable<EntityVersion<WebResourceName, string>>> GetVersions(IEnumerable<IdWithAwarenessLevel<WebResourceName>> idsOfEntitiesToQuery, TContext context, IGetVersionsLogger logger)
@@ -211,37 +214,52 @@ namespace CalDavSynchronizer.Implementation
         {
             using (AutomaticStopwatch.StartDebug(s_logger))
             {
-                if (_userAddressInSharedCollectionOrNull != null && await IsMeetingOrganizedByOthers(entityId))
+                if (_userAddressOrNull != null && _entityType == CalDavRepository.EntityType.Event)
                 {
-                    // In a calendar shared by someone else, Outlook removes a meeting the user declines or deletes. On the
-                    // server that would delete it for everybody. Leave it there: the relation is dropped, so the next
-                    // synchronization brings it back to Outlook.
-                    s_logger.Info($"Not deleting '{entityId.OriginalAbsolutePath}': a meeting organized by someone else in a shared calendar.");
-                    logger.LogWarning("Not deleted on the server: a meeting organized by someone else, in a shared calendar. It comes back in Outlook with the next synchronization.");
-                    return true;
+                    var calendar = await GetCalendarOrNull(entityId);
+                    if (calendar != null && IsMeetingOrganizedByOthers(calendar))
+                    {
+                        if (_isSharedCollection)
+                        {
+                            // In a calendar shared by someone else, Outlook removes a meeting the user declines or deletes. On the
+                            // server that would delete it for everybody. Leave it there: the relation is dropped, so the next
+                            // synchronization brings it back to Outlook.
+                            s_logger.Info($"Not deleting '{entityId.OriginalAbsolutePath}': a meeting organized by someone else in a shared calendar.");
+                            logger.LogWarning("Not deleted on the server: a meeting organized by someone else, in a shared calendar. It comes back in Outlook with the next synchronization.");
+                            return true;
+                        }
+
+                        // The user's own copy of someone else's meeting. Without SCHEDULE-AGENT=CLIENT, sabre/dav sends a REPLY
+                        // DECLINED when it is deleted. But Outlook removes the appointment itself when declining from the
+                        // invitation mail and sends the decline (the send guard can't read the removed appointment), or the
+                        // user chose not to send a response. So silence the server first.
+                        version = await SetScheduleAgentClientOrNull(entityId, version, calendar) ?? version;
+                    }
                 }
 
                 return await _calDavDataAccess.TryDeleteEntity(entityId, version);
             }
         }
 
-        private async Task<bool> IsMeetingOrganizedByOthers(WebResourceName entityId)
+        private async Task<IICalendar> GetCalendarOrNull(WebResourceName entityId)
         {
             var entities = await _calDavDataAccess.GetEntities(new[] {entityId});
             if (entities.Count == 0)
-                return false;
+                return null;
 
-            IICalendar calendar;
             try
             {
-                calendar = DeserializeCalendar(entities[0].Entity, _calendarSerializer);
+                return DeserializeCalendar(entities[0].Entity, _calendarSerializer);
             }
             catch (Exception x)
             {
-                s_logger.Error($"Could not deserialize '{entityId.OriginalAbsolutePath}', deleting it.", x);
-                return false;
+                s_logger.Error($"Could not deserialize '{entityId.OriginalAbsolutePath}', deleting it as it is.", x);
+                return null;
             }
+        }
 
+        private bool IsMeetingOrganizedByOthers(IICalendar calendar)
+        {
             var organizer = calendar.Events.FirstOrDefault()?.Organizer?.Value?.ToString();
             if (string.IsNullOrEmpty(organizer))
                 return false;
@@ -250,7 +268,37 @@ namespace CalDavSynchronizer.Implementation
             if (organizer.StartsWith(mailtoPrefix, StringComparison.OrdinalIgnoreCase))
                 organizer = organizer.Substring(mailtoPrefix.Length);
 
-            return !string.Equals(organizer, _userAddressInSharedCollectionOrNull, StringComparison.OrdinalIgnoreCase);
+            return !string.Equals(organizer, _userAddressOrNull, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <returns>The new version, or null if nothing was changed or the update failed.</returns>
+        private async Task<string> SetScheduleAgentClientOrNull(WebResourceName entityId, string version, IICalendar calendar)
+        {
+            var changed = false;
+            foreach (var evt in calendar.Events.Where(e => e.Organizer != null))
+            {
+                // Already CLIENT, or another explicit value (SERVER, NONE) that is left as it is.
+                if (evt.Organizer.Parameters.ContainsKey("SCHEDULE-AGENT"))
+                    continue;
+
+                evt.Organizer.Parameters.Add("SCHEDULE-AGENT", "CLIENT");
+                changed = true;
+            }
+
+            if (!changed)
+                return null;
+
+            try
+            {
+                var result = await _calDavDataAccess.TryUpdateEntity(entityId, version, SerializeCalendar(calendar));
+                s_logger.Info($"Set SCHEDULE-AGENT=CLIENT on '{entityId.OriginalAbsolutePath}' before deleting it, so the server sends no decline.");
+                return result?.Version;
+            }
+            catch (Exception x)
+            {
+                s_logger.Error($"Could not set SCHEDULE-AGENT=CLIENT on '{entityId.OriginalAbsolutePath}' before deleting it.", x);
+                return null;
+            }
         }
 
         public async Task<EntityVersion<WebResourceName, string>> TryUpdate(

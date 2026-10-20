@@ -381,7 +381,8 @@ namespace CalDavSynchronizer.Scheduling
                 dateTimeRangeProvider,
                 false,
                 btypeVersionComparer,
-                options.SharedCollectionOwner != null ? options.EmailAddress : null);
+                string.IsNullOrEmpty(options.EmailAddress) ? null : options.EmailAddress,
+                options.SharedCollectionOwner != null);
 
             componentsToFill.CalDavRepository = btypeRepository;
 

@@ -328,8 +328,8 @@ namespace CalDavSynchronizer.Implementation.Events
             }
         }
 
-        // "The item has been moved or deleted", seen with both codes.
-        private static bool IsMovedOrDeleted(COMException x) => x.ErrorCode == unchecked((int) 0x8004010A) || x.ErrorCode == unchecked((int) 0x8834010A);
+        // "The item has been moved or deleted": MAPI_E_OBJECT_DELETED, seen as 0x8004010A, 0x8834010A and 0x8C54010A.
+        private static bool IsMovedOrDeleted(COMException x) => (x.ErrorCode & 0xFFFF) == 0x010A;
 
         private void DeleteCancelledMeeting(AppointmentItem appointment, Inspector inspectorOrNull)
         {
