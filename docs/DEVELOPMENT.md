@@ -443,22 +443,17 @@ Short version with the update check: [UPDATES.md](UPDATES.md).
    - `CalDavSynchronizer/Properties/AssemblyInfoVersion.cs`
 2. Build in *Release* and build the setup.
 3. Uninstalling first is only needed for a setup with the same version.
-4. Zip both files of `CalDavSynchronizer.Setup\Release\`. `setup.exe` is
-   only the bootstrapper: it checks the prerequisites and runs the `.msi`
-   next to it.
-   ```powershell
-   Compress-Archive -Path CalDavSynchronizer.Setup\Release\setup.exe, CalDavSynchronizer.Setup\Release\CalDavSynchronizer.Setup.msi -DestinationPath CalDavSynchronizer-BayArea-5.2.2.zip
-   ```
-   Upload the zip to `https://download.bayarea-cc.com/caldavsynchronizer/`,
-   for example with the OpenSSH client built into Windows:
-   ```powershell
-   scp CalDavSynchronizer-BayArea-5.2.2.zip release\latest.json <user>@<download server>:<download directory>/caldavsynchronizer/
-   ```
-   The version in the name keeps browsers and proxies from serving an old
-   cached file.
-5. Update `latest.json` there (`url` pointing to the new zip). Upload the zip
-   first, so `latest.json` never points to a missing file.
-6. Commit, tag (`v5.2.2`), push. The AGPL requires the source of every
+4. Publish two downloads, see [UPDATES.md](UPDATES.md):
+   - the `.msi` alone, as `CalDavSynchronizer-BayArea-<version>.msi`. It is
+     the main download and what the update check opens. Its launch conditions
+     report a missing .NET Framework 4.8 or VSTO runtime;
+   - the full package, a zip of `setup.exe` and the `.msi`. `setup.exe` is
+     only the bootstrapper: it installs the missing prerequisites and runs
+     the `.msi` next to it.
+5. Upload both, then `latest.json`, so `latest.json` never points to a
+   missing file. The version in the names keeps browsers and proxies from
+   serving an old cached file.
+6. Commit, tag (`vX.Y.Z`), push. The AGPL requires the source of every
    released version to be available.
 
 ## 9. Test log

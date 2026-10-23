@@ -10,8 +10,9 @@ There is no automatic update. The user clicks **About → Check for updates**.
    `https://download.bayarea-cc.com/caldavsynchronizer/latest.json`:
    ```json
    {
-     "version": "5.1.0",
-     "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.1.0.zip",
+     "version": "5.2.3",
+     "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.2.3.msi",
+     "zip": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.2.3.zip",
      "notes": "Short text shown to the user."
    }
    ```
@@ -19,8 +20,12 @@ There is no automatic update. The user clicks **About → Check for updates**.
 3. If the version on the server is newer, it shows the version and `notes` and
    offers to open `url` in the browser. Otherwise it reports *No newer version
    available*.
-4. The user unzips the download and runs `setup.exe`. The installer replaces
-   the installed version (MSI major upgrade); the profiles are kept.
+4. The user runs the downloaded `.msi`. It replaces the installed version
+   (MSI major upgrade); the profiles are kept. Add-ins up to 5.2.2 read only
+   `url` as well, so they offer the `.msi` too.
+
+`zip` is the full package with `setup.exe`, which installs a missing .NET
+Framework 4.8 or VSTO runtime first. Only the download page offers it.
 
 The address of `latest.json` is `WebResourceUrls.SiteContainingNewestVersion`.
 The background update check of the original add-in is switched off.
@@ -29,8 +34,8 @@ The background update check of the original add-in is switched off.
 
 `https://download.bayarea-cc.com/caldavsynchronizer/index.html` (the directory
 itself redirects to the homepage) is `release/index.html`
-with `release/logo.png`. The page reads `latest.json` too, so its download
-button always offers the current zip. Upload both files once, and again only
+with `release/logo.png`. The page reads `latest.json` too: its download
+button offers `url` (the `.msi`), the link below it `zip`. Upload both files once, and again only
 when the page itself changes:
 
 ```powershell
@@ -56,7 +61,7 @@ All in one commit `Version X.Y.Z`:
   `UpgradeCode` stays the same, otherwise the old version isn't replaced.
 - `CalDavSynchronizer/Properties/AssemblyInfoVersion.cs`: `AssemblyVersion`.
   This is the version the update check compares.
-- `release/latest.json`: `version`, `url` and `notes`.
+- `release/latest.json`: `version`, `url`, `zip` and `notes`.
 
 ### 2. Build
 
@@ -72,21 +77,23 @@ In Visual Studio: configuration **Release**, *Rebuild Solution*, then build
 Debug build gives an installer with old or mismatched files.
 
 ```powershell
+Copy-Item CalDavSynchronizer.Setup\Release\CalDavSynchronizer.Setup.msi CalDavSynchronizer-BayArea-X.Y.Z.msi
 Compress-Archive -Path CalDavSynchronizer.Setup\Release\setup.exe, CalDavSynchronizer.Setup\Release\CalDavSynchronizer.Setup.msi -DestinationPath CalDavSynchronizer-BayArea-X.Y.Z.zip
 ```
 
-Both files are needed: `setup.exe` only installs the prerequisites and runs
-the `.msi` next to it.
+The `.msi` alone is the main download. The zip needs both files: `setup.exe`
+only installs the prerequisites and runs the `.msi` next to it, under its
+original name.
 
 ### 3. Upload
 
 ```powershell
-scp CalDavSynchronizer-BayArea-X.Y.Z.zip <user>@<download server>:<download directory>/caldavsynchronizer/
+scp CalDavSynchronizer-BayArea-X.Y.Z.msi CalDavSynchronizer-BayArea-X.Y.Z.zip <user>@<download server>:<download directory>/caldavsynchronizer/
 scp release\latest.json <user>@<download server>:<download directory>/caldavsynchronizer/
 ```
 
-Zip first, then `latest.json`, so `latest.json` never points to a missing
-file. The version in the file name keeps browsers and proxies from serving an
+`.msi` and zip first, then `latest.json`, so `latest.json` never points to a
+missing file. The version in the file name keeps browsers and proxies from serving an
 old cached zip. Old zips can stay on the server.
 
 ### 4. Check

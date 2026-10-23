@@ -61,6 +61,8 @@
   }
   .button:hover { filter: brightness(1.08); }
   .version { color: var(--muted); }
+  .alternative { margin: 14px 0 0; color: var(--muted); font-size: 0.95rem; }
+  .alternative[hidden] { display: none; }
   .notes { margin: 14px 0 0; }
   .notes:empty { display: none; }
   ul, ol { margin: 0; padding-left: 22px; }
@@ -87,6 +89,7 @@
       <a id="download" class="button" href="mailto:support@bayarea-cc.com">Download</a>
       <span id="version" class="version">Loading the current version&hellip;</span>
     </div>
+    <p id="alternative" class="alternative" hidden>Missing .NET Framework or Office runtime? <a id="zip" href="#">Full package (zip with setup.exe)</a>, installs them first.</p>
     <p id="notes" class="notes"></p>
   </section>
 
@@ -103,7 +106,7 @@
     <h2>Install</h2>
     <ol>
       <li>Close Outlook.</li>
-      <li>Unzip the download and run <code>setup.exe</code>. It installs .NET Framework 4.8 and the Office runtime first, if needed.</li>
+      <li>Run the downloaded <code>.msi</code> file. If it reports that the .NET Framework or the Office runtime is missing, use the full package instead: unzip it and run <code>setup.exe</code>.</li>
       <li>Start Outlook, open the <strong>CalDav Synchronizer</strong> tab and click <strong>Set up calendars</strong>. Your calendars and address books are set up automatically.</li>
     </ol>
     <p>To update later: <strong>CalDav Synchronizer &rarr; About &rarr; Check for updates</strong>. The installer replaces the old version and keeps your settings.</p>
@@ -122,6 +125,8 @@
     var link = document.getElementById("download");
     var version = document.getElementById("version");
     var notes = document.getElementById("notes");
+    var alternative = document.getElementById("alternative");
+    var zip = document.getElementById("zip");
 
     fetch("latest.json", { cache: "no-store" })
       .then(function (response) {
@@ -133,6 +138,10 @@
         link.textContent = "Download version " + latest.version;
         version.textContent = latest.url.split("/").pop();
         notes.textContent = latest.notes || "";
+        if (latest.zip) {
+          zip.href = latest.zip;
+          alternative.hidden = false;
+        }
       })
       .catch(function () {
         version.textContent = "Couldn't load the current version. Please contact support.";

@@ -45,7 +45,8 @@ requirements are described in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## Usage
 
-1. Unzip the release and run `setup.exe`.
+1. Run `CalDavSynchronizer-BayArea-<version>.msi`. If it reports a missing
+   prerequisite, unzip the full package and run `setup.exe` instead.
 2. In Outlook, open the *CalDav Synchronizer* ribbon and click
    **Set up calendars**.
 3. Click **Synchronize now** (otherwise the profiles synchronize at their
@@ -73,10 +74,11 @@ A step-by-step checklist for installing at a customer is in
    Visual Studio asks to change the ProductCode) and in
    `CalDavSynchronizer/Properties/AssemblyInfoVersion.cs`.
 2. Build the installer in *Release*.
-3. Zip `setup.exe` and `CalDavSynchronizer.Setup.msi` (both are needed:
-   `setup.exe` checks the prerequisites and runs the `.msi` next to it) as
-   `CalDavSynchronizer-BayArea-<version>.zip`, upload it to the release server
-   and update `latest.json` there (template in `release/latest.json`).
+3. Upload the `.msi` as `CalDavSynchronizer-BayArea-<version>.msi` and the
+   full package (zip of `setup.exe` and the `.msi`) as
+   `CalDavSynchronizer-BayArea-<version>.zip` to the release server, then
+   `latest.json` (template in `release/latest.json`). Details in
+   [docs/UPDATES.md](docs/UPDATES.md).
 4. Tag the commit and push it, so the source of every released version is
    available.
 

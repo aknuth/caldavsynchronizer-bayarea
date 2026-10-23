@@ -28,7 +28,8 @@ namespace CalDavSynchronizer.AutomaticUpdates
 
         /// <summary>
         /// Reads WebResourceUrls.SiteContainingNewestVersion, a JSON file on our release server:
-        /// { "version": "5.0.1", "url": "https://.../setup.exe", "notes": "optional text" }
+        /// { "version": "5.0.1", "url": "https://.../X.msi", "notes": "optional text" }
+        /// The download page also reads "zip", the full package with setup.exe; the add-in ignores it.
         /// </summary>
         public Version GetVersionOfDefaultDownload()
         {
