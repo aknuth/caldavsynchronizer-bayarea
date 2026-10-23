@@ -318,6 +318,10 @@ by hand are never changed.
 - If nothing is found (server unreachable, login rejected), nothing changes.
 - If one folder can't be created, only that collection is skipped and
   reported.
+- The default calendar of every account is added to *My Calendars*
+  (unchecked) if it is missing there. Outlook sometimes leaves out the
+  calendar of a second IMAP account; it was then only reachable through the
+  folder list.
 
 **Not covered.** Tasks (VTODO) are not set up. Profiles created here are
 marked `IsAutoConfigured`.

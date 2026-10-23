@@ -194,6 +194,7 @@ namespace CalDavSynchronizer.AutoSetup
                     using (var calendarFolder = GenericComObjectWrapper.Create((Folder) store.Inner.GetDefaultFolder(OlDefaultFolders.olFolderCalendar)))
                     {
                         changed |= Reconcile(calendarCollections, calendarFolder.Inner, OlDefaultFolders.olFolderCalendar, accountName, emailAddress, options, CreateEventMappingConfiguration, report);
+                        EnsureInMyCalendars(calendarFolder.Inner, report);
                     }
                 }
 
@@ -341,6 +342,48 @@ namespace CalDavSynchronizer.AutoSetup
             }
 
             return changed;
+        }
+
+        /// <summary>
+        /// Outlook doesn't always list the calendar of a second IMAP account under "My Calendars"; it is then only
+        /// reachable through the folder list. Add it there, unchecked, if it is missing.
+        /// </summary>
+        private void EnsureInMyCalendars(Folder calendarFolder, List<string> report)
+        {
+            try
+            {
+                using (var explorer = GenericComObjectWrapper.Create(_session.Application.ActiveExplorer()))
+                {
+                    if (explorer.Inner == null)
+                        return;
+
+                    using (var navigationPane = GenericComObjectWrapper.Create(explorer.Inner.NavigationPane))
+                    using (var modules = GenericComObjectWrapper.Create(navigationPane.Inner.Modules))
+                    using (var calendarModule = GenericComObjectWrapper.Create((CalendarModule) modules.Inner.GetNavigationModule(OlNavigationModuleType.olModuleCalendar)))
+                    using (var groups = GenericComObjectWrapper.Create(calendarModule.Inner.NavigationGroups))
+                    using (var myCalendars = GenericComObjectWrapper.Create(groups.Inner.GetDefaultNavigationGroup(OlGroupType.olMyFoldersGroup)))
+                    using (var navigationFolders = GenericComObjectWrapper.Create(myCalendars.Inner.NavigationFolders))
+                    {
+                        foreach (var navigationFolder in navigationFolders.Inner.ToSafeEnumerable<NavigationFolder>())
+                        {
+                            using (var folder = GenericComObjectWrapper.Create(navigationFolder.Folder))
+                            {
+                                if (folder.Inner != null && _session.CompareEntryIDs(folder.Inner.EntryID, calendarFolder.EntryID))
+                                    return;
+                            }
+                        }
+
+                        Marshal.FinalReleaseComObject(navigationFolders.Inner.Add(calendarFolder));
+                        s_logger.Info($"AutoSetup: added calendar '{calendarFolder.FolderPath}' to My Calendars.");
+                        report.Add($"  added to My Calendars: {calendarFolder.FolderPath}");
+                    }
+                }
+            }
+            catch (Exception x)
+            {
+                // Only cosmetic, the calendar is still reachable through the folder list.
+                s_logger.Warn($"AutoSetup: could not add calendar '{calendarFolder.FolderPath}' to My Calendars.", x);
+            }
         }
 
         private static Folder GetOrCreateSubFolder(Folder parent, string name, OlDefaultFolders folderType)
