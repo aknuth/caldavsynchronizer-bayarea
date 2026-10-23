@@ -1,5 +1,6 @@
 {
-  "version": "5.2.2",
-  "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.2.2.zip",
-  "notes": "Important fix: invitations whose ID is a web address (e.g. Adobe Connect) failed with error 401 and were sent to that address instead of to the server. Please update. Also: calendars with invitations from other calendar systems synchronize again (error 500)."
+  "version": "5.2.3",
+  "url": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.2.3.msi",
+  "zip": "https://download.bayarea-cc.com/caldavsynchronizer/CalDavSynchronizer-BayArea-5.2.3.zip",
+  "notes": "The download is now a single installer file (.msi), no unzipping needed. 5.2.2: invitations whose ID is a web address (e.g. Adobe Connect) are uploaded to the server again."
 }
